@@ -2,16 +2,16 @@
 
 그래픽스와 물리엔진 개발을 공부하며 자주 사용하고 헷갈리는 수학 및 물리 공식을 "왜 이런 공식이 나오는지" 감으로 이해하고 언제든 다시 꺼내 볼 수 있도록 정리한 핸드북입니다.
 
-## 🌐 인터랙티브 웹사이트
+## 인터랙티브 웹사이트
 
 이 책의 내용을 인터랙티브 캔버스를 통해 시각적이고 직관적으로 이해할 수 있습니다:
-👉 **[수학·물리 핸드북 인터랙티브 웹사이트](https://dev-math.log-trace.net/)**
+**[수학·물리 핸드북 인터랙티브 웹사이트](https://dev-math.log-trace.net/)**
 
 > **Tip:** 웹사이트에서는 다양한 물리 법칙과 벡터 계산을 캔버스를 통해 직접 조작하며 이해를 돕습니다.
 
 ---
 
-## 📖 책 내용 소개
+## 책 내용 소개
 
 - **그림 읽는 법**: 방향과 관계를 빠르게 기억하기 위한 약도 (ASCII 및 SVG 다이어그램 활용)
 - **벡터 (Vector)**: 2D/3D 공간에서의 기본 벡터 물리
@@ -22,9 +22,11 @@
 
 ---
 
-## 📄 라이선스 (License)
+## 라이선스 (License)
 
 ### 본문 및 이미지 (Handbook Content)
+
+Copyright © 2026 Cheongha Kim.
 
 본 핸드북의 텍스트, 그림 및 마크다운 파일은 **[Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ko)** 라이선스에 따라 사용할 수 있습니다.
 
