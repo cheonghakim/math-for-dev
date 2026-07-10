@@ -1,0 +1,3877 @@
+# 그래픽스/물리엔진 개발자를 위한 수학·물리 핸드북 개정판
+
+> **목표:** 수학 공식을 외우는 책이 아니라, 그래픽스와 물리엔진 개발에서 “왜 이 공식이 나오는지” 감으로 이해하고 다시 꺼내 볼 수 있는 책.
+
+이 핸드북은 기존의 삼각함수·회전·행렬 내용을 바탕으로, 개발할 때 자주 헷갈리는 **벡터, 내적, 외적, 투영, 반사, 속도/속력/가속도, 힘, 충돌**까지 하나의 흐름으로 다시 구성했습니다.
+
+
+## 그림 읽는 법
+
+이 책의 그림은 대부분 ASCII 그림입니다. 정확한 미술 그림이 아니라 **방향과 관계를 빠르게 기억하기 위한 약도**라고 생각하면 됩니다.
+
+![● = 점, 위치, 물체 중심](./images/diagram_001.svg)
+
+
+특히 주의할 점은 이겁니다.
+
+```txt
+점 position은 “어디에 있나?”를 나타낸다.
+벡터 vector는 “어느 방향으로 얼마나 가나?”를 나타낸다.
+```
+
+예를 들어 `mouse - player`는 점 하나가 아니라, **player에서 mouse로 향하는 화살표**입니다.
+
+---
+
+# 0. 이 책의 전체 지도
+
+개발에서 수학과 물리는 따로 떨어져 있지 않습니다.
+
+![좌표](./images/diagram_002.svg)
+
+
+ 가장 중요한 큰 흐름은 이겁니다.
+
+```txt
+모양은 로컬 좌표로 만들고,
+행렬로 월드에 배치하고,
+속도와 힘으로 움직이고,
+충돌하면 법선 방향으로 반응한다.
+```
+
+이 문장 하나가 그래픽스와 물리엔진의 큰 뼈대입니다.
+
+## 0.1 실무 수학·물리 용어 대조표 (Glossary)
+
+이 책을 보기 전에 수학, 물리, 그리고 실제 개발 코드에서 사용하는 용어들이 매치되지 않아 헷갈리는 경우가 많습니다. 아래 대조표를 참고하면 개념이 더욱 뚜렷해집니다.
+
+| 수학적 용어 | 물리학적 용어 | 코드 표기 (JS / GLSL) | 실무적 비유 및 의미 |
+| --- | --- | --- | --- |
+| **스칼라 (Scalar)** | 시간, 질량 ($m$), 계수 | `number` / `float` | 방향이 없고 크기만 있는 일반 수치 |
+| **벡터 (Vector)** | 변위, 속도, 가속도 | `{x, y}` / `vec2`, `vec3` | 방향과 크기를 모두 가진 화살표 |
+| **정규화 (Normalize)** | 단위 방향 벡터 | `normalize(v)` | 화살표의 길이를 1로 만들고 방향만 남기기 |
+| **내적 (Dot Product)** | 일 (Work), 투영량 | `dot(a, b)` | 두 화살표의 방향 일치율 (그림자 겹침 길이) |
+| **외적 (Cross Product)** | 토크 (Torque), 면 법선 | `cross(a, b)` | 두 화살표에 수직인 축 (2D에서는 좌/우 판정) |
+| **행렬 (Matrix)** | 선형 변환 공간 | `Float32Array` / `mat4` | 로컬 좌표를 월드/화면으로 옮기는 차원이동 묶음 |
+| **미분 (Differentiation)** | 순간 변화율 | `(pos - prevPos) / dt` | 한 프레임($dt$) 동안 변화한 속도/기울기 계산 |
+| **적분 (Integration)** | 상태 누적 | `pos += vel * dt` | 프레임마다 미세한 속도/가속도 변화량을 누적하기 |
+
+---
+
+# Part 1. 좌표와 벡터
+
+## 1. 좌표는 “위치”다
+
+좌표는 점의 위치입니다.
+
+```txt
+p = (x, y)
+```
+
+예를 들어 화면에서 캐릭터가 `(300, 200)`에 있다면:
+
+```js
+const player = {
+  x: 300,
+  y: 200
+};
+```
+
+이건 “플레이어가 어디에 있는가?”를 나타냅니다.
+
+## 1.1 수학 좌표계와 화면 좌표계
+
+수학에서는 보통 y가 위로 갈수록 커집니다.
+
+![수학 좌표계](./images/diagram_003.svg)
+
+
+하지만 브라우저 Canvas, DOM, 많은 2D 게임 화면은 y가 아래로 갈수록 커집니다.
+
+![화면 좌표계](./images/diagram_004.svg)
+
+
+그래서 수학책에서 말하는 “반시계 방향 회전”이 화면에서는 반대로 느껴질 수 있습니다.
+
+> **기억 문장:** 화면 좌표계에서는 y가 아래로 자라서, 회전 방향이 수학책과 다르게 보일 수 있다.
+
+---
+
+## 2. 벡터는 “이동량” 또는 “방향+크기”다
+
+점이 위치라면, 벡터는 이동량입니다.
+
+```txt
+위치: 어디에 있는가?
+벡터: 어디로 얼마나 가는가?
+```
+
+예:
+
+```js
+const position = { x: 300, y: 200 };
+const velocity = { x: 50, y: 0 };
+```
+
+`velocity = { x: 50, y: 0 }`은 오른쪽으로 초당 50만큼 움직인다는 뜻입니다.
+
+```txt
+position ●────────→ velocity
+```
+
+## 2.1 두 점 사이의 방향 벡터
+
+플레이어에서 마우스를 향하는 방향을 알고 싶으면, **도착점인 마우스 위치에서 시작점인 플레이어 위치를 뺍니다.**
+
+```txt
+방향 벡터 = 도착점 - 시작점
+```
+
+코드로 쓰면 이렇게 됩니다.
+
+```js
+const dx = mouse.x - player.x;
+const dy = mouse.y - player.y;
+
+const toMouse = { x: dx, y: dy };
+```
+
+그림으로 보면 `toMouse`는 점이 아니라 **플레이어에서 마우스로 향하는 화살표**입니다.
+
+![시작점 도착점](./images/diagram_005.svg)
+
+
+`dx`, `dy`의 부호를 보면 마우스가 어느 쪽에 있는지도 알 수 있습니다.
+
+![dx > 0 → 마우스가 플레이어보다 오른쪽](./images/diagram_006.svg)
+
+
+> **기억 문장:** `목표 - 현재 = 현재에서 목표로 가는 벡터`
+
+---
+
+## 3. 벡터의 길이
+
+벡터의 길이는 피타고라스 정리입니다.
+
+```txt
+length = sqrt(x² + y²)
+```
+
+코드:
+
+```js
+function length(v) {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+}
+```
+
+예:
+
+```js
+length({ x: 3, y: 4 }); // 5
+```
+
+그림:
+
+![●](./images/diagram_007.svg)
+
+
+## 3.1 거리 계산
+
+두 점 사이의 거리는 `도착점 - 시작점`으로 만든 벡터의 길이입니다.
+
+```js
+function distance(a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+```
+
+게임 예:
+
+```js
+if (distance(player, enemy) < 100) {
+  console.log("적이 가까움");
+}
+```
+
+---
+
+## 4. 정규화: 방향만 남기기
+
+벡터에는 방향과 크기가 같이 들어 있습니다.
+
+```txt
+velocity = 방향 + 속력
+```
+
+정규화는 벡터의 길이를 1로 만들어서 **방향만 남기는 것**입니다.
+
+```js
+function normalize(v) {
+  const len = Math.sqrt(v.x * v.x + v.y * v.y);
+
+  if (len === 0) {
+    return { x: 0, y: 0 };
+  }
+
+  return {
+    x: v.x / len,
+    y: v.y / len
+  };
+}
+```
+
+예:
+
+```js
+normalize({ x: 10, y: 0 }); // { x: 1, y: 0 }
+normalize({ x: 0, y: 5 });  // { x: 0, y: 1 }
+```
+
+> **기억 문장:** 정규화는 “화살표 길이를 1로 맞추는 것”이다.
+
+## 4.1 캐릭터가 마우스 방향으로 일정한 속도로 이동하기
+
+> **실무 맥락 (Mental Hook) - 마우스 클릭 이동 속도 폭발 버그:**
+> 만약 2D 탑다운 게임에서 마우스로 클릭한 곳으로 캐릭터를 초당 100픽셀의 일정한 속도로 움직이고 싶다고 합시다. 이때 정규화를 거치지 않고 아래와 같이 코드를 짠다면 심각한 버그가 발생합니다.
+
+잘못된 코드 예시 (정규화 없음):
+```js
+const dx = mouse.x - player.x; // 거리차
+const dy = mouse.y - player.y;
+player.x += dx * speed * dt; // 클릭한 거리가 멀수록 속도가 100배, 1000배로 폭증함!
+```
+
+> 위 코드는 마우스를 캐릭터와 가까운 5픽셀 옆을 누르면 천천히 가지만, 500픽셀 떨어진 화면 끝을 누르면 눈 깜짝할 사이에 텔레포트하듯 순간이동해 버립니다. 왜냐하면 방향 벡터인 `dx`, `dy` 안에 **"거리(크기)"** 정보가 필터링되지 않고 섞여서 들어갔기 때문입니다.
+> 따라서 화살표 방향의 힘만 남겨서 1픽셀짜리 표준 나침반 화살표로 만들어 주는 **정규화(Normalize)**가 필수입니다.
+
+```js
+// [JavaScript - CPU 메인 루프 연산]
+
+// 1. 캐릭터에서 마우스로 향하는 상대 거리 벡터를 계산
+const toMouse = {
+  x: mouse.x - player.x,
+  y: mouse.y - player.y
+};
+
+// 2. 정규화를 통해 크기를 1로 고정하여 순수한 "방향" 나침반 벡터만 획득
+const dir = normalize(toMouse);
+
+// 3. 방향에 프레임 독립적인 속력(speed * dt)을 곱하여 최종 이동 적용
+player.x += dir.x * speed * dt;
+player.y += dir.y * speed * dt;
+```
+
+---
+
+# Part 2. 내적과 외적
+
+## 5. 내적은 “같은 방향으로 얼마나 겹치는가”다
+
+> **실무 맥락 (Mental Hook) - 조명(Shading)과 시야 판정:**
+> 3D 그래픽스 게임에서 어두운 동굴 속 횃불을 켰을 때 벽면의 밝기가 어떻게 시시각각 달라질까요? 바로 **내적**을 사용합니다. 
+> 빛이 내리쬐는 방향(벡터 $A$)과 벽면이 바라보는 수직 방향(벡터 $B$)을 내적하면 벽이 빛을 정면으로 받는지(내적 = 1), 빗겨 받는지(내적 > 0), 완전히 등지고 있는지(내적 <= 0) 알 수 있습니다. 정면으로 받을수록 밝게, 비스듬히 받을수록 어둡게 명암을 조절하는 셰이더 조명 연산의 핵심이 내적입니다.
+> 2D/3D AI 캐릭터의 시야 판정도 마찬가지입니다. 내가 바라보는 앞 방향과 적이 위치한 방향의 일치도(내적)를 비교해 시야 내 감지 여부를 알아냅니다.
+
+내적 공식:
+```txt
+dot = ax * bx + ay * by
+```
+
+코드:
+```js
+// [JavaScript/GLSL 공통 - 내적 공식]
+function dot(a, b) {
+  return a.x * b.x + a.y * b.y;
+}
+```
+
+내적을 어렵게 외우기보다 이렇게 기억하세요.
+
+> **내적은 두 벡터가 같은 방향을 얼마나 보고 있는지 알려준다. (즉, 두 화살표의 겹침/그림자 길이)**
+
+## 5.1 내적 결과의 의미 (두 벡터가 정규화되어 있을 때)
+
+![내적 = 1 완전히 같은 방향](./images/diagram_008.svg)
+
+그림:
+![같은 방향: dot > 0](./images/diagram_009.svg)
+
+### 🔴 실시간 인터랙티브 시각화 (웹 캔버스)
+아래 캔버스에서 마우스를 드래그하여 두 벡터의 각도 변화에 따라 내적 값과 정사영 그림자(초록색 선)가 어떻게 변화하는지 확인해보세요.
+
+<div id="interactive-dot-product"></div>
+
+---
+
+## 5.2 적이 내 앞에 있는지 판단하기
+
+```js
+// [JavaScript - CPU 인공지능 시야 연산]
+
+// 1. 캐릭터가 바라보는 앞 방향 벡터 (각도로부터 방향 벡터 생성)
+const forward = {
+  x: Math.cos(player.rotation),
+  y: Math.sin(player.rotation)
+};
+
+// 2. 캐릭터에서 적을 향하는 상대 위치 방향 벡터 구하기 및 정규화
+const toEnemy = normalize({
+  x: enemy.x - player.x,
+  y: enemy.y - player.y
+});
+
+// 3. 내적 수행 (두 방향의 겹침 정도)
+const facing = dot(forward, toEnemy);
+
+if (facing > 0) {
+  console.log("적이 앞쪽에 있음 (각도 < 90도)");
+} else {
+  console.log("적이 뒤쪽에 있음 (각도 > 90도)");
+}
+```
+
+더 좁은 시야각(예: 전방 $45^\circ$ 부채꼴 범위)을 만들고 싶으면 기준값을 높여주면 됩니다. 코사인 $45^\circ$값은 약 `0.707`입니다.
+
+```js
+// 전방 45도 내에 적이 들어왔는가?
+if (facing > 0.707) {
+  console.log("시야 범위 내에 있음");
+}
+```
+
+## 5.3 내적과 각도
+
+일반적인 두 벡터의 내적 공식은 다음과 같습니다.
+
+```txt
+a · b = |a| * |b| * cosθ
+```
+
+만약 두 벡터 `a`, `b`가 정규화(길이가 1)되어 있다면, 벡터의 크기인 `|a|`와 `|b|`가 모두 1이 되므로 내적 결과가 곧 두 벡터 사이의 각도에 대한 코사인 값이 됩니다.
+
+```txt
+dot(a, b) = cosθ
+```
+
+그래서 두 벡터가 정규화된 상태에서 각도가 필요하면:
+
+```js
+const angle = Math.acos(dot(a, b));
+```
+
+하지만 실전에서는 각도 자체보다 `dot > 0.7`처럼 비교만 하는 경우가 많습니다. `acos`는 상대적으로 계산 비용이 비싸므로, 굳이 각도로 바꾸지 않고 코사인 값 자체로 비교하는 것이 성능상 유리합니다.
+
+> **실무 팁 (그래픽스 조명):** 3D 그래픽스의 가장 기초적인 조명 모델(Lambertian Diffuse)은 표면의 법선 벡터(Normal)와 빛을 향하는 벡터(Light)의 내적값(`dot(N, L)`)을 밝기로 사용합니다. 이때 두 벡터가 정규화되어 있지 않으면 조명이 비정상적으로 어둡거나 밝아지므로 내적 전 반드시 정규화를 해야 합니다.
+
+---
+
+## 6. 투영: 그림자를 떨어뜨리는 것
+
+투영은 어떤 벡터를 다른 방향 위에 **그림자처럼 내려놓는 것**입니다.
+
+중요한 점은 이겁니다.
+
+```txt
+투영 결과는 “점”이 아니라, 기준 방향 위에 놓인 “새 벡터”입니다.
+```
+
+아래 그림에서 `v`는 원래 벡터이고, `n`은 기준 방향입니다.  
+`proj`는 `v`를 `n` 방향으로만 봤을 때 남는 성분입니다.
+
+![원래 벡터 v](./images/diagram_010.svg)
+
+
+즉, `v` 전체가 점으로 사라지는 게 아닙니다.  
+`v`에서 **n 방향으로 작용하는 부분만 남긴 벡터**가 `proj`입니다.
+
+공식:
+
+```txt
+projection = n * dot(v, n)
+```
+
+단, `n`은 길이가 1인 정규화 벡터여야 합니다. 만약 `n`이 정규화되어 있지 않다면 아래와 같은 공식으로 투영해야 합니다.
+
+```txt
+projection = n * (dot(v, n) / length(n)²)
+```
+
+정규화되지 않은 벡터 위에 투영하는 경우, `length(n)²`으로 나누어 크기 왜곡을 보정해야 합니다. 따라서 보통은 기준 벡터 `n`을 먼저 정규화한 뒤 투영하는 것이 간편하고 실수를 줄이는 방법입니다.
+
+코드 (정규화된 `n` 기준):
+
+```js
+function project(v, n) {
+  const d = dot(v, n);
+  return {
+    x: n.x * d,
+    y: n.y * d
+  };
+}
+```
+
+예를 들어 `n = (1, 0)`이면 x축 방향만 남습니다.
+
+```txt
+v = (3, 4)
+n = (1, 0)
+project(v, n) = (3, 0)
+```
+
+그림:
+
+![v = (3, 4)](./images/diagram_011.svg)
+
+
+## 6.1 경사면에서 미끄러지는 방향
+
+물체가 경사면 위에 있을 때, 중력은 아래로 작용합니다.  
+그런데 물체가 실제로 미끄러지는 방향은 **경사면을 따라가는 방향**입니다.
+
+그래서 중력 벡터를 경사면 방향으로 투영하면, 경사면을 따라 미끄러지는 성분을 구할 수 있습니다.
+
+![물체 ●](./images/diagram_012.svg)
+
+
+```js
+const gravity = { x: 0, y: 9.8 };
+const slopeDir = normalize({ x: 1, y: 0.5 });
+const slide = project(gravity, slopeDir);
+```
+
+`slide`는 중력 전체가 아니라, **경사면 방향으로 남은 중력 성분**입니다.
+
+> **기억 문장:** 투영은 “이 힘이 이 방향으로는 얼마나 작용하나?”를 보는 도구다.
+
+---
+
+## 7. 외적은 “어느 쪽으로 도는가”다
+
+> **실무 맥락 (Mental Hook) - AI 회전 제어 및 포탑 조준:**
+> 2D/3D 탑다운 게임에서 적 캐릭터가 플레이어를 향해 몸을 자연스럽게 돌리며 쫓아오게 하고 싶습니다. 이때 내적만으로는 "내 시야에 가까이 있는가"는 알아낼 수 있어도, **"내가 왼쪽으로 돌아야 더 빠른가, 아니면 오른쪽으로 돌아야 더 빠른가?"**는 알 수 없습니다.
+> 내적은 코사인 대칭 관계이기 때문에 왼쪽 30도와 오른쪽 30도의 내적값이 똑같기 때문입니다.
+> 이때 **외적**이 구원투수가 됩니다. 나의 정면 화살표와 적으로의 화살표를 외적하면 그 결과값의 부호가 양수(+) 또는 음수(-)로 떨어집니다. 이 부호값만 보고 AI는 즉각적으로 좌회전 또는 우회전을 실행할 수 있습니다.
+
+3D 외적은 두 벡터에 동시에 수직인 제3의 벡터를 만들지만, 2D 공간에서는 회전 축이 $z$축 하나뿐이므로 보통 $z$값 스칼라 하나만 구합니다.
+
+```js
+// [JavaScript/GLSL 공통 - 2D 외적 연산]
+function cross2D(a, b) {
+  return a.x * b.y - a.y * b.x;
+}
+```
+
+2D 외적 결과의 의미 (수학적 우측 핸드 좌표계, y가 위로 증가 기준):
+```txt
+cross > 0   b가 a의 왼쪽, 반시계 방향 (CCW)
+cross < 0   b가 a의 오른쪽, 시계 방향 (CW)
+cross = 0   같은 선 위 (일직선)
+```
+
+> [!WARNING]
+> **화면 좌표계(y-down)에서의 반전:**
+> Canvas나 브라우저 화면처럼 y축이 아래로 증가하는 좌표계에서는 외적 결과의 부호가 가진 기하학적 의미가 반대로 뒤집힙니다.
+> * `cross > 0` 이면 b가 a의 **오른쪽(시계 방향)**
+> * `cross < 0` 이면 b가 a의 **왼쪽(반시계 방향)**
+> 따라서 타겟이 내 왼쪽에 있는지 오른쪽에 있는지 판단할 때, 현재 사용 중인 좌표계의 y축 방향을 반드시 먼저 확인해야 합니다!
+
+### 🟢 실시간 인터랙티브 시각화 (웹 캔버스)
+아래 캔버스에서 마우스를 드래그하여 두 벡터의 상대 위치에 따라 2D 외적값과 방향 판정 결과가 어떻게 달라지는지 실시간으로 확인해보세요.
+
+<div id="interactive-cross-product"></div>
+
+---
+
+## 7.1 적이 내 왼쪽에 있는지 오른쪽에 있는지
+
+```js
+// [JavaScript - CPU 캐릭터 회전 제어]
+
+// 1. 캐릭터가 바라보는 앞 방향 벡터 계산
+const forward = {
+  x: Math.cos(player.rotation),
+  y: Math.sin(player.rotation)
+};
+
+// 2. 캐릭터에서 적을 향하는 상대 방향 벡터 계산 및 정규화
+const toEnemy = normalize({
+  x: enemy.x - player.x,
+  y: enemy.y - player.y
+});
+
+// 3. 2D 외적을 통해 적이 좌/우 중 어느 쪽에 위치하는지 횡방향 판정
+const side = cross2D(forward, toEnemy);
+
+if (side > 0) {
+  console.log("적은 내 왼쪽에 있음 -> 좌회전 작동");
+} else if (side < 0) {
+  console.log("적은 내 오른쪽에 있음 -> 우회전 작동");
+} else {
+  console.log("정면 또는 정반대 뒤에 있음");
+}
+```
+
+## 7.2 그래픽스에서 외적은 어디에 쓰나?
+
+외적은 특히 3D 그래픽스에서 자주 씁니다.
+
+```txt
+두 방향 벡터 → 수직인 방향 벡터
+```
+
+대표 용도:
+
+![1. 표면 법선 normal 구하기](./images/diagram_014.svg)
+
+
+삼각형의 법선 예:
+
+```js
+function cross3D(a, b) {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x
+  };
+}
+```
+
+```txt
+삼각형의 두 변을 외적하면, 면에 수직인 방향(법선 벡터, Normal)이 나온다.
+```
+
+### A. 백페이스 컬링 (Backface Culling - 후면 제거)
+3D 카메라가 삼각형 폴리곤을 바라볼 때, 이 폴리곤이 카메라를 향하고 있는지(앞면), 아니면 카메라를 등지고 있는지(뒷면)를 판단하여 뒷면인 경우 그리기를 생략(Culling)하여 렌더링 속도를 최적화합니다.
+
+1. 삼각형 세 꼭짓점 $A, B, C$의 두 변 벡터인 $\vec{E_1} = B - A$와 $\vec{E_2} = C - A$를 만듭니다.
+2. 두 변을 외적하여 표면 법선 벡터 $\vec{N} = \vec{E_1} \times \vec{E_2}$를 구합니다.
+3. 카메라의 시선 방향 벡터 $\vec{V}$와 법선 벡터 $\vec{N}$의 내적을 구합니다.
+   * `dot(N, V) > 0` 이면 면이 카메라 반대쪽을 보고 있으므로 **그리지 않음 (Cull)**.
+   * `dot(N, V) <= 0` 이면 면이 카메라를 향해 있으므로 **그림**.
+
+### B. TBN 행렬 구성 (노멀 맵 매핑)
+3D 그래픽스에서 울퉁불퉁한 표면 질감을 가짜로 표현하는 노멀 맵(Normal Map)을 계산하기 위해 **접접 공간(Tangent Space)**이 필요합니다.
+* 이때 표면의 가로축인 **접선(Tangent, $\vec{T}$)** 벡터와 표면의 **법선(Normal, $\vec{N}$)** 벡터를 외적하여, 세 번째 축인 **종법선(Bitangent, $\vec{B}$)** 벡터를 만듭니다.
+  $$\vec{B} = \vec{N} \times \vec{T}$$
+* 이 세 축을 조립하여 셰이더 내부에서 3D 벡터 좌표계를 변환하는 $3 \times 3$ **TBN 행렬**을 만듭니다.
+
+---
+
+# Part 3. 삼각함수와 회전
+
+## 8. 삼각함수는 “원 위의 좌표”다
+
+삼각함수와 회전은 이렇게 잡으면 덜 헷갈립니다.
+
+> **cos는 x축 쪽 성분, sin은 y축 쪽 성분이다.**
+
+반지름이 1인 원을 단위원이라고 합니다.
+
+![y](./images/diagram_015.svg)
+
+
+각도 `θ`만큼 돌았을 때 원 위 점의 좌표가:
+
+```txt
+x = cosθ
+y = sinθ
+```
+
+입니다.
+
+그래서 방향 벡터는 이렇게 만듭니다.
+
+```js
+const dir = {
+  x: Math.cos(angle),
+  y: Math.sin(angle)
+};
+```
+
+## 8.1 자주 쓰는 각도값
+
+아래 표는 **수학 좌표계(y-up)** 기준이며, 화면 좌표계(y-down)에서의 방향 반전 차이점을 보여줍니다.
+
+| 각도 | 라디안 | cos | sin | 수학 좌표계(y-up) 방향 | 화면 좌표계(y-down) 방향 |
+| ---: | ---: | --: | --: | --- | --- |
+| 0도 | 0 | 1 | 0 | 오른쪽 | 오른쪽 |
+| 90도 | π/2 | 0 | 1 | 위쪽 | **아래쪽 (CW 회전)** |
+| 180도 | π | -1 | 0 | 왼쪽 | 왼쪽 |
+| 270도 | 3π/2 | 0 | -1 | 아래쪽 | **위쪽 (CCW 회전)** |
+| 360도 | 2π | 1 | 0 | 오른쪽 | 오른쪽 |
+
+> [!NOTE]
+> 화면 좌표계(y-down)에서는 $y$축이 아래로 갈수록 커지기 때문에, 양의 부호를 가진 $90^\circ$ ($\sin(90^\circ) = 1$) 방향이 화면상에서 **아래쪽**이 됩니다.
+
+![90°](./images/diagram_016.svg)
+
+
+> **기억 문장:** 0도는 오른쪽, cos는 x, sin은 y.
+
+---
+
+## 9. 도와 라디안
+
+코드에서는 대부분 라디안을 씁니다.
+
+```js
+Math.sin(angle);
+Math.cos(angle);
+```
+
+여기서 `angle`은 도가 아니라 라디안입니다.
+
+도 → 라디안:
+
+```js
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+```
+
+라디안 → 도:
+
+```js
+function radToDeg(rad) {
+  return rad * 180 / Math.PI;
+}
+```
+
+예:
+
+```js
+const angle = degToRad(45);
+```
+
+---
+
+## 10. 각도에서 방향 벡터 만들기
+
+총알 발사:
+
+```js
+const bulletVelocity = {
+  x: Math.cos(angle) * speed,
+  y: Math.sin(angle) * speed
+};
+```
+
+그림:
+
+![shooter ●](./images/diagram_017.svg)
+
+
+캐릭터 앞 방향:
+
+```js
+const forward = {
+  x: Math.cos(rotation),
+  y: Math.sin(rotation)
+};
+
+position.x += forward.x * speed * dt;
+position.y += forward.y * speed * dt;
+```
+
+## 10.1 화면 좌표계에서 위로 쏘고 싶을 때
+
+Canvas처럼 y가 아래로 증가한다면 위쪽은 `y = -1`입니다.
+
+수학 좌표계:
+
+```txt
+위 = +y
+```
+
+화면 좌표계:
+
+```txt
+위 = -y
+```
+
+그래서 화면 좌표계에서는 다음처럼 조정해야 할 수 있습니다.
+
+```js
+const dir = {
+  x: Math.cos(angle),
+  y: Math.sin(angle)
+};
+```
+
+또는 프로젝트 기준에 따라:
+
+```js
+const dir = {
+  x: Math.cos(angle),
+  y: -Math.sin(angle)
+};
+```
+
+중요한 건 한 프로젝트 안에서 기준을 하나로 통일하는 것입니다.
+
+---
+
+## 11. 방향 벡터에서 각도 구하기: atan2
+
+방향 벡터에서 라디안 각도를 구할 때는 반드시 `Math.atan2` 함수를 사용해야 합니다.
+
+```js
+const angle = Math.atan2(dir.y, dir.x);
+```
+
+이 함수는 인자의 순서가 **y가 먼저, x가 나중**인 점에 특히 주의해야 합니다.
+
+```txt
+atan2(y, x)
+```
+
+### 11.1 왜 `atan` 대신 `atan2`를 쓰는가? (실무 면접 단골 질문)
+단순 아크탄젠트 함수인 `Math.atan(y / x)`를 쓰지 않고 `Math.atan2(y, x)`를 써야 하는 이유는 두 가지 결정적인 한계 때문입니다.
+
+1. **상한선 및 사분면(Quadrant)의 유실:**
+   * `Math.atan(val)`은 탄젠트의 역함수로서 범위가 $[-\pi/2, \pi/2]$ (즉, $-90^\circ$에서 $+90^\circ$ 사이인 우측 반원 영역)로만 제한됩니다.
+   * 예를 들어, 방향이 우상향 `(x: 1, y: 1)` 일 때 비율은 `1 / 1 = 1`이며 각도는 $45^\circ$입니다. 그런데 좌하향 `(x: -1, y: -1)` 일 때도 비율은 `-1 / -1 = 1`이므로 동일하게 $45^\circ$가 반환되어 정반대 방향을 구분하지 못합니다.
+   * 반면 `Math.atan2(y, x)`는 $y$와 $x$의 부호를 각각 개별 분석하여 $[-\pi, \pi]$ (즉, $-180^\circ$에서 $+180^\circ$까지의 전방위 $360^\circ$ 영역)의 올바른 사분면 각도를 찾아줍니다.
+2. **분모가 0인 오류 (Division by Zero):**
+   * 위쪽이나 아래쪽 수직 방향 `(x: 0, y: 1)` 일 때, `Math.atan(y / x)`는 `1 / 0`이 되어 0으로 나누기 오류가 발생하거나 값이 무한대(`Infinity`)가 되어 크래시가 납니다.
+   * `Math.atan2(1, 0)`은 내부적으로 예외 처리가 되어 있어 $90^\circ$ ($\pi/2$)의 정확한 값을 안전하게 반환합니다.
+
+## 11.2 마우스를 바라보는 캐릭터
+
+> **실무 맥락 (Mental Hook) - 마우스를 조준하는 포탑 / 캐릭터 고개 돌리기:**
+> 탑다운 뷰의 2D 슈팅 게임이나 서바이벌 게임에서 캐릭터가 마우스 커서가 움직이는 방향을 향해 총구를 항상 겨누게 만들어야 합니다.
+> 마우스 좌표와 플레이어 좌표의 차이인 `(dx, dy)`는 직관적인 거리(화살표) 정보이지만, 게임 엔진의 스프라이트 회전 컴포넌트(`rotation` 혹은 `angle`)는 30도, 90도 같은 **각도(라디안)** 값을 원합니다.
+> 이 화살표 정보 `(dx, dy)`를 컴퓨터가 회전시킬 수 있는 라디안 각도로 바꿔주는 마법의 번역기가 바로 `Math.atan2` 함수입니다.
+
+```js
+// [JavaScript - CPU 캐릭터 2D 회전 제어]
+
+// 1. 내 위치(시작점)와 마우스 위치(목표점) 사이의 변위 벡터(화살표) 계산
+const dx = mouse.x - player.x;
+const dy = mouse.y - player.y;
+
+// 2. atan2를 이용해 방향 벡터를 라디안 각도로 변환 (y가 첫 번째 인자임에 주의!)
+const angle = Math.atan2(dy, dx);
+
+// 3. 캐릭터의 회전 컴포넌트에 변환된 각도를 할당하여 조준 적용
+player.rotation = angle;
+```
+
+![시작점 목표점](./images/diagram_018.svg)
+
+> **기억 문장:** 목표를 바라보려면 `atan2(목표.y - 내.y, 목표.x - 내.x)`.
+
+---
+
+## 12. 2D 회전 공식
+
+점 `(x, y)`를 `θ`만큼 회전시키면:
+
+![x' = x cosθ - y sinθ](./images/diagram_019.svg)
+
+
+코드:
+
+```js
+function rotatePoint(p, angle) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+
+  return {
+    x: p.x * c - p.y * s,
+    y: p.x * s + p.y * c
+  };
+}
+```
+
+이 함수는 이 책에서 가장 중요한 함수 중 하나입니다.
+
+## 12.1 왜 x에는 -sin이 들어갈까?
+
+x축 방향 `(1, 0)`을 회전하면:
+
+```txt
+rotatedX = (cosθ, sinθ)
+```
+
+y축 방향 `(0, 1)`을 회전하면:
+
+```txt
+rotatedY = (-sinθ, cosθ)
+```
+
+그림으로 보면, 점을 회전시키는 게 아니라 **x축과 y축이라는 기준 방향 자체가 같이 돌아간다**고 생각하면 쉽습니다.
+
+![원래 기준축](./images/diagram_020.svg)
+
+
+어떤 점 `(x, y)`는 이렇게 볼 수 있습니다.
+
+```txt
+점 p = x축 방향으로 x만큼 + y축 방향으로 y만큼
+```
+
+회전 후에는:
+
+```txt
+p' = rotatedX * x + rotatedY * y
+```
+
+그래서:
+
+![x' = x cosθ - y sinθ](./images/diagram_021.svg)
+
+
+---
+
+## 13. 90도 회전은 특별히 쉽다
+
+아래 코드 공식은 **수학 좌표계(y-up)** 기준입니다.
+
+반시계 방향 90도 회전 (CCW):
+
+```js
+function rotate90CCW(v) {
+  return { x: -v.y, y: v.x };
+}
+```
+
+시계 방향 90도 회전 (CW):
+
+```js
+function rotate90CW(v) {
+  return { x: v.y, y: -v.x };
+}
+```
+
+> [!WARNING]
+> **화면 좌표계(y-down)에서의 반전:**
+> 화면 좌표계에서는 y축이 거꾸로 되어 있어 CCW와 CW의 연산이 반대로 됩니다.
+> * 화면 좌표계(y-down)에서 **시계 방향 90도 회전(CW)**: `{ x: -v.y, y: v.x }`
+> * 화면 좌표계(y-down)에서 **반시계 방향 90도 회전(CCW)**: `{ x: v.y, y: -v.x }`
+> 
+> 예를 들어, 화면 좌표계에서 앞 방향 `forward = { x: 1, y: 0 }`에서 오른쪽 방향(시계방향 90도) `right = { x: 0, y: 1 }`을 구하려면 `rotate90CCW`의 로직인 `{ x: -v.y, y: v.x }`를 사용해야 합니다.
+
+---
+
+# Part 4. 행렬과 변환
+
+## 14. 이동, 회전, 스케일
+
+오브젝트 변환은 보통 세 가지입니다.
+
+```txt
+이동 Translation: 어디에 놓을까?
+회전 Rotation: 얼마나 돌릴까?
+스케일 Scale: 얼마나 키울까?
+```
+
+## 14.1 스케일
+
+```txt
+x' = x * sx
+y' = y * sy
+```
+
+```js
+function scaleVec2(v, sx, sy) {
+  return {
+    x: v.x * sx,
+    y: v.y * sy
+  };
+}
+```
+
+## 14.2 이동
+
+![x' = x + tx](./images/diagram_022.svg)
+
+
+```js
+function translateVec2(v, tx, ty) {
+  return {
+    x: v.x + tx,
+    y: v.y + ty
+  };
+}
+```
+
+---
+
+## 15. 로컬 좌표와 월드 좌표
+
+오브젝트는 보통 자기 중심을 기준으로 모양을 가집니다.
+
+```js
+const localVertices = [
+  { x: -50, y: -25 },
+  { x:  50, y: -25 },
+  { x:  50, y:  25 },
+  { x: -50, y:  25 }
+];
+```
+
+이건 중심이 `(0, 0)`인 사각형입니다.
+
+이 사각형을 실제 월드에 놓으려면:
+
+![로컬 좌표](./images/diagram_023.svg)
+
+
+코드:
+
+```js
+function transformPoint2D(p, position, rotation, scale) {
+  // 1. scale
+  let x = p.x * scale.x;
+  let y = p.y * scale.y;
+
+  // 2. rotate
+  const c = Math.cos(rotation);
+  const s = Math.sin(rotation);
+
+  const rx = x * c - y * s;
+  const ry = x * s + y * c;
+
+  // 3. translate
+  return {
+    x: rx + position.x,
+    y: ry + position.y
+  };
+}
+```
+
+사용:
+
+```js
+const worldVertices = localVertices.map(v =>
+  transformPoint2D(v, box.position, box.rotation, box.scale)
+);
+```
+
+> **기억 문장:** 물체 자체를 먼저 키우고, 자기 중심에서 돌리고, 마지막에 월드 위치로 옮긴다.
+
+---
+
+## 16. 피벗 기준 회전
+
+회전은 기본적으로 원점 `(0, 0)`을 기준으로 일어납니다.
+
+![원점 O를 기준으로 p가 회전하는 상황](./images/diagram_024.svg)
+
+
+하지만 실제 게임에서는 원점이 아니라 특정 점을 기준으로 돌리고 싶을 때가 많습니다.
+
+예:
+
+![문은 중심이 아니라 경첩 pivot을 기준으로 돈다.](./images/diagram_025.svg)
+
+
+어떤 점 `pivot`을 중심으로 회전하고 싶으면 순서는 이렇습니다.
+
+![1. pivot이 원점이 되도록 p를 옮긴다. p - pivot](./images/diagram_026.svg)
+
+
+공식:
+
+```txt
+p' = pivot + rotate(p - pivot, angle)
+```
+
+코드:
+
+```js
+function rotateAround(p, pivot, angle) {
+  const translated = {
+    x: p.x - pivot.x,
+    y: p.y - pivot.y
+  };
+
+  const rotated = rotatePoint(translated, angle);
+
+  return {
+    x: rotated.x + pivot.x,
+    y: rotated.y + pivot.y
+  };
+}
+```
+
+예:
+
+```js
+const rotatedPoint = rotateAround(point, objectCenter, angle);
+```
+
+이건 문이 경첩을 기준으로 회전하거나, 무기가 손잡이를 기준으로 도는 경우에 많이 씁니다.
+
+---
+
+## 17. 동차좌표와 3x3 행렬
+
+2D 공간에서의 회전(Rotation)과 크기 조절(Scale)은 $2 \times 2$ 행렬 곱으로 직접 표현할 수 있습니다. 그러나 위치 이동(Translation)은 덧셈 연산이기 때문에 $2 \times 2$ 행렬의 곱셈 형태로 표현할 수 없습니다.
+
+```txt
+회전/스케일 (행렬 곱): p' = M * p
+위치 이동 (벡터 합): p' = p + t
+```
+
+이동, 회전, 스케일을 하나의 일관된 **행렬 곱셈식으로 통일(Affine Transformation)**하여 결합하기 위해, 2차원 좌표 `(x, y)` 뒤에 가상의 3번째 성분 `w`를 추가하여 `(x, y, w)` 형태의 3차원 좌표로 확장합니다.
+
+```txt
+position = (x, y, 1)
+```
+
+이 시스템을 **동차좌표 (Homogeneous Coordinates)**라고 부릅니다. 동차좌표계를 도입하면 2D 상의 위치 이동이 3차원 투영 공간에서의 '밀어밀기(Shear)' 변환으로 해석되어 곱셈 연산으로 처리가 가능해집니다.
+
+### 17.1 동차좌표에서 w 성분의 역할 ($w=0$ vs. $w=1$)
+그래픽스 연산 시 정점의 속성에 따라 $w$ 값을 제어하여 변환 행렬 연산 결과를 제어합니다.
+
+* **위치 (Position): $w = 1$**
+  * 위치를 나타내는 좌표에는 세 번째 값으로 $1$을 둡니다. 행렬 곱셈을 수행하면 이동량 `tx`, `ty`가 그대로 더해져 물체가 정상적으로 이동합니다.
+  * $T \cdot (x, y, 1)^T = (x + tx, y + ty, 1)^T$
+* **방향 및 벡터 (Direction / Vector): $w = 0$**
+  * 방향만을 나타내는 벡터(예: 법선 벡터, 시선 벡터 등)는 공간상의 위치 이동에 영향을 받지 않아야 합니다. 따라서 $w = 0$으로 설정합니다.
+  * 이렇게 하면 이동 변환 행렬($T$)을 곱해도 이동 성분 `tx`, `ty`가 $0$과 곱해져 소거되므로 이동하지 않고 방향 속성만 보존됩니다.
+  * $T \cdot (x, y, 0)^T = (x, y, 0)^T$ (이동 무시)
+
+이동 행렬:
+
+![T = [ 1 0 tx ]](./images/diagram_027.svg)
+
+
+회전 행렬:
+
+![R = [ cosθ -sinθ 0 ]](./images/diagram_028.svg)
+
+
+스케일 행렬:
+
+![S = [ sx 0 0 ]](./images/diagram_029.svg)
+
+
+---
+
+## 18. 변환 합성
+
+이동, 회전, 스케일을 하나로 합치면:
+
+```txt
+M = T * R * S
+```
+
+점에 적용하면:
+
+```txt
+worldPosition = T * R * S * localPosition
+```
+
+주의:
+
+```txt
+행렬 곱은 오른쪽부터 적용된다.
+```
+
+즉:
+
+![localPosition](./images/diagram_030.svg)
+
+
+## 18.1 순서가 왜 중요할까?
+
+점 `(1, 0)`을 생각해봅시다.
+
+먼저 이동 후 회전:
+
+![p = (1, 0)](./images/diagram_031.svg)
+
+
+먼저 회전 후 이동:
+
+![p = (1, 0)](./images/diagram_032.svg)
+
+
+결과가 다릅니다.
+
+```txt
+이동 후 회전: (0, 11)
+회전 후 이동: (10, 1)
+```
+
+> **기억 문장:** 행렬 순서가 바뀌면 물체가 “자기 자리에서 도는지”, “원점 주변을 공전하는지”가 달라진다.
+
+---
+
+## 19. 3x3 행렬 코드
+
+여기서는 `p' = M * p` 방식으로 생각합니다.
+
+```js
+function mat3Translation(tx, ty) {
+  return [
+    1, 0, tx,
+    0, 1, ty,
+    0, 0, 1
+  ];
+}
+
+function mat3Rotation(angle) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+
+  return [
+    c, -s, 0,
+    s,  c, 0,
+    0,  0, 1
+  ];
+}
+
+function mat3Scale(sx, sy) {
+  return [
+    sx, 0,  0,
+    0,  sy, 0,
+    0,  0,  1
+  ];
+}
+```
+
+행렬 곱:
+
+```js
+function mat3Multiply(a, b) {
+  const out = new Array(9);
+
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      out[row * 3 + col] =
+        a[row * 3 + 0] * b[0 * 3 + col] +
+        a[row * 3 + 1] * b[1 * 3 + col] +
+        a[row * 3 + 2] * b[2 * 3 + col];
+    }
+  }
+
+  return out;
+}
+```
+
+점 변환:
+
+```js
+function mat3TransformPoint(m, p) {
+  return {
+    x: m[0] * p.x + m[1] * p.y + m[2],
+    y: m[3] * p.x + m[4] * p.y + m[5]
+  };
+}
+```
+
+합성:
+
+```js
+function makeTransform2D(position, rotation, scale) {
+  const T = mat3Translation(position.x, position.y);
+  const R = mat3Rotation(rotation);
+  const S = mat3Scale(scale.x, scale.y);
+
+  return mat3Multiply(T, mat3Multiply(R, S));
+}
+```
+
+---
+
+# Part 5. 미분 감각과 운동
+
+## 20. 속도, 속력, 가속도
+
+이 부분은 이름이 비슷해서 헷갈리기 쉽습니다.
+
+```txt
+위치 position: 어디에 있는가? (단위: m 또는 px)
+속도 velocity: 어느 방향으로 얼마나 빠르게 움직이는지 나타내는 벡터값 (단위: m/s 또는 px/s)
+속력 speed: 방향을 빼고 빠르기만 나타내는 스칼라값 (단위: m/s 또는 px/s, speed = |velocity|)
+가속도 acceleration: 속도가 시간에 따라 얼마나 빠르게 변하는가를 나타내는 벡터값 (단위: m/s² 또는 px/s²)
+```
+
+표로 보면:
+
+| 개념 | 영어 | 구분 | 물리적 기호 | 의미 |
+| --- | --- | --- | --- | --- |
+| 위치 | position | 벡터 (Vector) | $x$, $p$ | 공간 상의 좌표 |
+| 속도 | velocity | 벡터 (Vector) | $v$ | 방향과 속력을 가진 물리량 |
+| 속력 | speed | 스칼라 (Scalar) | $s$, $|v|$ | 속도의 크기 |
+| 가속도 | acceleration | 벡터 (Vector) | $a$ | 초당 속도가 변화하는 정도 |
+
+## 20.1 물리 이론: 등가속도 운동 공식 (연속적 해법)
+
+가속도 $a$가 일정하게 유지될 때, 임의의 시간 $t$초 후의 상태를 수학적으로 계산하는 **등가속도 운동 공식**은 다음과 같습니다.
+
+1. **시간-속도 공식:**
+   $$v(t) = v_0 + a t$$
+2. **시간-위치 공식:**
+   $$x(t) = x_0 + v_0 t + \frac{1}{2} a t^2$$
+3. **시간 제외 공식:**
+   $$v^2 - v_0^2 = 2 a (x - x_0)$$
+
+* $x_0$, $v_0$는 각각 처음 위치와 처음 속도입니다.
+
+> **실무에서의 한계:**
+> 종이 위에 수학 문제를 풀 때는 이 공식들을 사용하여 임의의 시점 $t$에서의 위치를 한 번에 알아낼 수 있습니다. 그러나 게임 및 물리엔진 개발에서는 이를 사용할 수 없는 경우가 대부분입니다. 왜냐하면 매 프레임 플레이어의 조작 입력, 바람(공기 저항), 갑작스러운 충돌 반응 등에 의해 가속도 $a$가 실시간으로 끊임없이 변하기 때문입니다.
+> 따라서, 매 프레임 아주 미세한 시간 조각($dt$) 단위로 잘라 위치와 속도를 매번 누적하여 업데이트하는 **수치 적분(Numerical Integration)** 방식을 채택합니다.
+
+## 20.2 코드로 보는 관계 (수치 적분)
+
+```js
+position.x += velocity.x * dt;
+position.y += velocity.y * dt;
+
+velocity.x += acceleration.x * dt;
+velocity.y += acceleration.y * dt;
+```
+
+즉:
+
+![가속도 → 속도를 바꿈](./images/diagram_033.svg)
+
+
+![acceleration](./images/diagram_034.svg)
+
+
+## 20.2 자동차 비유
+
+자동차 위치가 `position`입니다.
+
+자동차가 오른쪽으로 초속 10m 움직이면 `velocity`입니다.
+
+```txt
+velocity = { x: 10, y: 0 }
+```
+
+자동차의 계기판에 10m/s라고만 뜨면 `speed`입니다.
+
+```txt
+speed = 10
+```
+
+엑셀을 밟아서 속도가 점점 증가하면 `acceleration`입니다.
+
+```txt
+acceleration = { x: 2, y: 0 }
+```
+
+---
+
+## 21. dt는 프레임 독립 이동의 핵심
+
+게임 루프는 매 프레임 실행됩니다.
+
+하지만 컴퓨터마다 프레임 수가 다를 수 있습니다.
+
+```txt
+60fps: 1초에 60번 업데이트
+144fps: 1초에 144번 업데이트
+```
+
+프레임마다 `position.x += 1`을 하면 144fps 컴퓨터가 더 빨리 움직입니다.
+
+그래서 `dt`를 씁니다.
+
+```js
+position.x += velocity.x * dt;
+```
+
+`dt`는 지난 프레임 이후 흐른 시간입니다.
+
+![60fps라면 dt ≈ 1 / 60](./images/diagram_035.svg)
+
+
+속도가 초당 100px이면:
+
+```js
+position.x += 100 * dt;
+```
+
+어떤 fps에서도 1초에 약 100px 움직입니다.
+
+> **기억 문장:** dt는 “이번 프레임이 1초 중 몇 조각인지”다.
+
+---
+
+## 22. 미분과 적분을 개발 감각으로 보기
+
+수학책에서는 미적분이 복잡하게 느껴지지만, 실무 개발(물리엔진)에서는 다음과 같이 매우 단순하게 이해할 수 있습니다.
+
+* **미분(Differentiation):** 현재 어떤 물리량이 변하는 **'변화율(기록된 속도 등)'**을 구하는 것.
+* **적분(Integration):** 시간 조각 $dt$ 동안 일어난 **'작은 변화량'**을 현재 값에 계속 누적하여 최종 상태를 복원하는 것.
+
+물리엔진에서는 다음과 같이 적분을 통해 캐릭터를 이동시키고 중력을 적용합니다.
+
+```txt
+가속도(a)를 누적(적분)하여 -> 속도(v)를 구하고,
+속도(v)를 누적(적분)하여 -> 위치(x)를 구한다.
+```
+
+## 22.2 수치 적분법(Numerical Integration)의 세 가지 방식
+
+컴퓨터는 연속적인 계산을 할 수 없으므로, 매 프레임 $dt$ 간격으로 이 적분을 근사하여 해결합니다. 이를 수치 적분이라고 하며, 실무에서는 주로 다음 세 가지 방식이 쓰입니다.
+
+### A. 명시적 오일러 (Explicit Euler / Forward Euler)
+현재 프레임의 속도를 바탕으로 위치를 먼저 바꾼 뒤, 가속도로 속도를 갱신합니다.
+
+```js
+// [JavaScript - CPU 물리 시뮬레이션 적분 연산]
+
+// 1. 현재 속도로 위치를 먼저 업데이트
+position.x += velocity.x * dt;
+position.y += velocity.y * dt;
+
+// 2. 가속도로 속도를 업데이트
+velocity.x += acceleration.x * dt;
+velocity.y += acceleration.y * dt;
+```
+* **문제점:** 수학적으로 오차가 매 단계마다 밖으로 발산하는 성질을 가집니다. 스프링 진동 운동이나 공전 궤도 시뮬레이션 등에 사용 시 물체가 에너지를 무한히 얻어 궤도 밖으로 폭발하듯 튕겨 나가는 치명적인 불안정성을 보입니다. 실무에서는 거의 쓰이지 않습니다.
+
+### B. 반암시적 오일러 (Semi-implicit Euler / Symplectic Euler)
+가속도로 속도를 먼저 갱신하고, 그 새로운 속도로 위치를 업데이트합니다. **코드상 순서만 바뀐 형태**입니다.
+
+```js
+// [JavaScript - CPU 물리 시뮬레이션 적분 연산]
+
+// 1. 가속도로 속도를 먼저 업데이트
+velocity.x += acceleration.x * dt;
+velocity.y += acceleration.y * dt;
+
+// 2. 새로운 속도로 위치를 업데이트
+position.x += velocity.x * dt;
+position.y += velocity.y * dt;
+```
+* **특징 (업계 표준):** 오일러 적분법 중 **에너지 보존 법칙(Symplectic)**을 가장 잘 만족하는 알고리즘입니다. 스프링이나 공전 궤도가 발산하지 않고 안정된 균형을 이룹니다. 구현이 극도로 단순하면서도 놀라울 만큼 안정적이어서 **Box2D, Unity, Unreal Physics 등 대부분의 상용/오픈소스 물리 엔진의 핵심 통합기(Integrator)로 사용**됩니다.
+
+### C. 베를레 적분 (Verlet Integration)
+속도(Velocity) 변수를 명시적으로 저장하지 않고, **'현재 위치'와 '이전 프레임의 위치'의 차이**를 통해 속도를 암묵적으로 계산하여 이동을 갱신하는 방식입니다.
+
+공식:
+$$x_{new} = 2x_{current} - x_{previous} + a \cdot dt^2$$
+
+코드:
+```js
+// [JavaScript - CPU 물리 시뮬레이션 적분 연산]
+function updateVerlet(body, dt) {
+  // 이전 위치 백업
+  const tempX = body.x;
+  const tempY = body.y;
+
+  // 베를레 적분 공식 적용 (이전 프레임과의 변위차로 움직임 추적)
+  body.x = 2 * body.x - body.prevX + body.ax * dt * dt;
+  body.y = 2 * body.y - body.prevY + body.ay * dt * dt;
+
+  // 이전 위치 갱신
+  body.prevX = tempX;
+  body.prevY = tempY;
+
+  // 가속도 초기화 (매 프레임 힘 누적 후 리셋)
+  body.ax = 0;
+  body.ay = 0;
+}
+```
+* **장점:** 속도 변수가 따로 없기 때문에, 충돌 해결 과정에서 물체의 위치를 강제로 이동시키더라도 속도 불일치 버그가 일어나지 않고 알아서 매끄러운 물리 상태가 보정됩니다.
+* **실무 활용:** **밧줄(Rope), 옷감(Cloth / Fabric) 시뮬레이션, 레그돌(Ragdoll)** 등 서로 얽혀 있는 수많은 제약조건(Constraints)을 빠르게 강제로 조정해야 하는 시스템에 최적의 물리 엔진 방식으로 쓰입니다.
+```
+
+이게 아주 단순한 적분입니다.
+
+## 22.1 중력 예제
+
+```js
+// [JavaScript - CPU 물리 시뮬레이션 적분 연산]
+const gravity = { x: 0, y: 980 }; // px/s² (중력 가속도)
+
+function update(body, dt) {
+  // 중력을 속도에 누적 (적분)
+  body.velocity.x += gravity.x * dt;
+  body.velocity.y += gravity.y * dt;
+
+  // 새로운 속도로 위치 갱신 (적분)
+  body.position.x += body.velocity.x * dt;
+  body.position.y += body.velocity.y * dt;
+}
+```
+
+처음에는 천천히 떨어지다가 시간이 지날수록 빨라집니다.
+
+![처음: ●](./images/diagram_036.svg)
+
+
+왜냐하면 중력이 위치를 직접 바꾸는 게 아니라, 속도를 계속 바꾸기 때문입니다.
+
+---
+
+# Part 6. 힘과 물리엔진 감각
+
+## 23. 힘은 가속도를 만든다
+
+뉴턴의 두 번째 법칙:
+
+```txt
+F = m * a
+```
+
+즉, 힘 $F$를 질량 $m$으로 나눈 것이 가속도 $a$가 됩니다.
+
+```txt
+a = F / m
+```
+
+코드:
+
+```js
+function applyForce(body, force) {
+  body.acceleration.x += force.x / body.mass;
+  body.acceleration.y += force.y / body.mass;
+}
+```
+
+질량이 크면 같은 힘을 받아도 덜 움직입니다.
+
+```txt
+가벼운 공: 같은 힘에도 휙 날아감
+무거운 상자: 같은 힘에도 조금 움직임
+```
+
+## 23.1 힘 누적 방식
+
+물리엔진에서는 한 프레임 동안 작동하는 다양한 힘(중력, 키보드 조작, 저항 등)을 모두 모았다가(누적), 마지막에 가속도를 계산하여 적용합니다.
+
+```js
+function applyForce(body, force) {
+  body.force.x += force.x;
+  body.force.y += force.y;
+}
+
+// 반암시적 오일러 적분기를 통한 속도와 위치 갱신
+function integrate(body, dt) {
+  if (body.mass === 0) return; // 고정된 물체(무한 질량)는 갱신 안 함
+
+  const ax = body.force.x / body.mass;
+  const ay = body.force.y / body.mass;
+
+  // 1. 속도 먼저 업데이트
+  body.velocity.x += ax * dt;
+  body.velocity.y += ay * dt;
+
+  // 2. 새로운 속도로 위치 업데이트
+  body.position.x += body.velocity.x * dt;
+  body.position.y += body.velocity.y * dt;
+
+  // 3. 다음 프레임을 위한 누적 힘 리셋
+  body.force.x = 0;
+  body.force.y = 0;
+}
+```
+
+## 23.2 실무 마찰과 저항: 공기 저항 (Drag Force)
+
+물체가 공기나 물 같은 유체 속을 움직일 때 속도의 반대 방향으로 받는 저항력입니다. 저항력을 물리엔진에 반영하지 않으면 물체가 감속하지 않고 영원히 날아갑니다.
+
+### A. 선형 공기 저항 (Linear Drag)
+느린 속도로 움직이는 물체나 단순 2D 탑다운 게임에서 마찰 효과를 줄 때 씁니다. 속력에 정비례하여 힘이 감소합니다.
+$$\vec{F}_{drag} = -c \cdot \vec{v}$$
+
+코드:
+```js
+function applyLinearDrag(body, dragCoeff) {
+  // 속도의 반대 방향으로 힘을 누적
+  const dragForce = {
+    x: -dragCoeff * body.velocity.x,
+    y: -dragCoeff * body.velocity.y
+  };
+  applyForce(body, dragForce);
+}
+```
+
+### B. 속도 제곱 저항 (Quadratic Drag)
+비행기, 낙하산, 날아가는 화살 등 속도가 빠른 경우 실감나는 유체 저항을 묘사합니다. 속도의 제곱에 비례합니다.
+$$\vec{F}_{drag} = -\frac{1}{2} \rho v^2 C_d A \hat{v} = -k \cdot |\vec{v}| \cdot \vec{v}$$
+
+코드:
+```js
+function applyQuadraticDrag(body, k) {
+  const vx = body.velocity.x;
+  const vy = body.velocity.y;
+  const speed = Math.sqrt(vx * vx + vy * vy);
+
+  if (speed > 0) {
+    const dragForce = {
+      x: -k * speed * vx,
+      y: -k * speed * vy
+    };
+    applyForce(body, dragForce);
+  }
+}
+```
+
+## 23.3 종단 속도 (Terminal Velocity)
+
+하늘에서 떨어지는 빗방울이나 낙하 대상을 시뮬레이션할 때, 중력 방향 힘($m \cdot g$)과 공기 저항력($F_{drag}$)이 평형을 이루어 가속도가 0이 되는 최대 속도 한계점을 **종단 속도**라고 합니다.
+
+물리 법칙 상 무한히 가속되지 않도록 다음과 같이 속도를 제한합니다.
+
+코드:
+```js
+function clampTerminalVelocity(body, maxSpeed) {
+  const vx = body.velocity.x;
+  const vy = body.velocity.y;
+  const speed = Math.sqrt(vx * vx + vy * vy);
+
+  if (speed > maxSpeed) {
+    body.velocity.x = (vx / speed) * maxSpeed;
+    body.velocity.y = (vy / speed) * maxSpeed;
+  }
+}
+```
+
+## 23.4 포물선 탄도학 (Ballistic Trajectory)
+
+대포를 쏘거나 화살을 쏠 때, 고정된 초기 속력 $v_0$로 상대 위치 $(x, y)$에 있는 타겟을 정확히 맞추기 위한 **조준 발사각 $\theta$**를 계산하는 기법입니다.
+
+공식:
+$$\theta = \arctan\left(\frac{v_0^2 \pm \sqrt{v_0^4 - g(g x^2 + 2 y v_0^2)}}{gx}\right)$$
+
+* $g$는 중력 가속도(예: 9.8), $x$와 $y$는 목표물과 나의 상대적 거리 차이입니다.
+* $\pm$ 부호에 따라 포탄의 궤적이 2가지 나옵니다. ($+$는 높게 포물선을 그리며 떨어지는 고각, $-$는 직사 형태로 날아가는 저각)
+* 루트 내부가 음수($<0$)가 되면 주어진 초기 속력 $v_0$로는 사거리가 부족하여 타겟에 닿을 수 없음을 의미합니다.
+
+코드:
+```js
+function solveLaunchAngle(targetX, targetY, v0, g) {
+  const v2 = v0 * v0;
+  const v4 = v2 * v2;
+  const gX = g * targetX;
+
+  // 판별식 계산
+  const discriminant = v4 - g * (g * targetX * targetX + 2 * targetY * v2);
+
+  if (discriminant < 0) {
+    return null; // 사거리 부족으로 타격 불가능
+  }
+
+  const root = Math.sqrt(discriminant);
+
+  // 고각 (High trajectory)
+  const angleHigh = Math.atan2(v2 + root, gX);
+  // 저각 (Low trajectory)
+  const angleLow = Math.atan2(v2 - root, gX);
+
+  return {
+    high: angleHigh, // 라디안
+    low: angleLow    // 라디안
+  };
+}
+```
+
+---
+
+## 24. 반사는 법선 방향 성분을 뒤집는 것
+
+공이 벽에 튕기는 상황을 봅시다.
+
+![들어오는 속도 v 나가는 속도 r](./images/diagram_037.svg)
+
+
+법선 `normal`은 표면에 수직인 방향입니다.  
+반사는 속도 전체를 뒤집는 게 아니라, **normal 방향 성분만 반대로 뒤집는 것**입니다.
+
+![v를 둘로 나누어 생각한다.](./images/diagram_038.svg)
+
+
+반사 공식:
+
+```txt
+r = v - 2 * dot(v, n) * n
+```
+
+단, `n`은 정규화되어 있어야 합니다.
+
+코드:
+
+```js
+function reflect(v, n) {
+  const d = dot(v, n);
+
+  return {
+    x: v.x - 2 * d * n.x,
+    y: v.y - 2 * d * n.y
+  };
+}
+```
+
+---
+
+## 24.1 벽에 튕기는 공
+
+```js
+const velocity = { x: 100, y: 50 };
+const wallNormal = { x: -1, y: 0 };
+
+const reflected = reflect(velocity, wallNormal);
+```
+
+탄성 계수를 넣으면 덜 튕기게 만들 수 있습니다.
+
+```js
+function reflectWithRestitution(v, n, restitution) {
+  const r = reflect(v, n);
+
+  return {
+    x: r.x * restitution,
+    y: r.y * restitution
+  };
+}
+```
+
+```js
+const bounce = reflectWithRestitution(velocity, wallNormal, 0.8);
+```
+
+`restitution`은 튕김 정도입니다.
+
+```txt
+1.0 = 완전 탄성, 거의 그대로 튕김
+0.5 = 절반 정도만 튕김
+0.0 = 안 튕김
+```
+
+---
+
+## 25. 충돌 판정: AABB부터 시작하자
+
+가장 쉬운 박스 충돌은 AABB입니다.
+
+AABB는 축에 평행한 박스입니다.
+
+![+---------+](./images/diagram_039.svg)
+
+
+두 AABB가 겹치는지:
+
+```js
+function intersectsAABB(a, b) {
+  return (
+    a.min.x <= b.max.x &&
+    a.max.x >= b.min.x &&
+    a.min.y <= b.max.y &&
+    a.max.y >= b.min.y
+  );
+}
+```
+
+직관:
+
+```txt
+x축에서도 겹치고,
+y축에서도 겹치면,
+두 박스는 겹친다.
+```
+
+## 25.1 원 충돌
+
+원끼리 충돌은 거리로 판단합니다.
+
+```js
+function intersectsCircle(a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const r = a.radius + b.radius;
+
+  return dx * dx + dy * dy <= r * r;
+}
+```
+
+`sqrt`를 쓰지 않고 제곱끼리 비교하면 더 빠릅니다.
+
+---
+
+## 26. 회전된 박스 OBB
+
+회전된 박스는 AABB보다 어렵습니다.
+
+![+------+](./images/diagram_040.svg)
+
+
+먼저 로컬 꼭짓점을 만들고:
+
+```js
+function getBoxVertices(box) {
+  const hw = box.width / 2;
+  const hh = box.height / 2;
+
+  const local = [
+    { x: -hw, y: -hh },
+    { x:  hw, y: -hh },
+    { x:  hw, y:  hh },
+    { x: -hw, y:  hh }
+  ];
+
+  return local.map(p =>
+    transformPoint2D(p, box.position, box.rotation, box.scale)
+  );
+}
+```
+
+이 과정은 결국:
+
+```txt
+로컬 좌표 → 회전 → 이동 → 월드 좌표
+```
+
+입니다.
+
+## 26.1 점이 회전된 박스 안에 있는지 검사하기
+
+월드 점을 박스의 로컬 좌표로 되돌리면 쉽습니다.
+
+```js
+function worldToLocal(point, body) {
+  const translated = {
+    x: point.x - body.position.x,
+    y: point.y - body.position.y
+  };
+
+  const rotated = rotatePoint(translated, -body.rotation);
+
+  return {
+    x: rotated.x / body.scale.x,
+    y: rotated.y / body.scale.y
+  };
+}
+
+function pointInBoxLocal(p, halfWidth, halfHeight) {
+  return (
+    p.x >= -halfWidth &&
+    p.x <=  halfWidth &&
+    p.y >= -halfHeight &&
+    p.y <=  halfHeight
+  );
+}
+```
+
+사용:
+
+```js
+const localMouse = worldToLocal(mouseWorld, box);
+
+if (pointInBoxLocal(localMouse, box.width / 2, box.height / 2)) {
+  console.log("박스 클릭됨");
+}
+```
+
+> **기억 문장:** 충돌 검사가 어렵다면, 월드를 로컬로 되돌려서 쉬운 모양으로 검사한다.
+
+---
+
+## 27. 반작용과 충돌 해결
+
+충돌 판정은 “겹쳤다”를 아는 것입니다.
+
+충돌 해결은 “겹친 것을 어떻게 밀어낼까?”입니다.
+
+예를 들어 원 두 개가 겹쳤다면:
+
+```txt
+   ○●○
+```
+
+두 원의 중심을 잇는 방향이 충돌 법선입니다.
+
+```js
+const normal = normalize({
+  x: b.position.x - a.position.x,
+  y: b.position.y - a.position.y
+});
+```
+
+겹친 깊이:
+
+```js
+const dist = distance(a.position, b.position);
+const penetration = a.radius + b.radius - dist;
+```
+
+둘을 반씩 밀어내기:
+
+```js
+a.position.x -= normal.x * penetration * 0.5;
+a.position.y -= normal.y * penetration * 0.5;
+
+b.position.x += normal.x * penetration * 0.5;
+b.position.y += normal.y * penetration * 0.5;
+```
+
+## 27.1 속도 반응
+
+충돌 후 서로 멀어지는 방향으로 속도를 바꿔야 합니다.
+
+입문 단계에서는 단순하게 법선 방향 속도를 뒤집는 식으로 시작할 수 있습니다.
+
+```js
+function bounceVelocity(v, normal, restitution) {
+  const vn = dot(v, normal);
+
+  // 이미 멀어지는 중이면 건드리지 않음
+  if (vn > 0) return v;
+
+  return {
+    x: v.x - (1 + restitution) * vn * normal.x,
+    y: v.y - (1 + restitution) * vn * normal.y
+  };
+}
+```
+
+---
+
+# Part 7. 3D 확장 맛보기
+
+## 28. 2D 회전은 3D의 z축 회전이다
+
+3D에는 축이 세 개 있습니다.
+
+```txt
+x축
+y축
+z축
+```
+
+2D 화면을 정면에서 보면, z축은 화면 밖으로 나오는 축입니다.
+
+![화면](./images/diagram_041.svg)
+
+
+2D 회전 행렬은 3D의 z축 회전과 같습니다.
+
+![[ cosθ -sinθ 0 ]](./images/diagram_042.svg)
+
+
+## 28.1 x축 회전
+
+![[ 1 0 0 ]](./images/diagram_043.svg)
+
+
+## 28.2 y축 회전
+
+![[ cosθ 0 sinθ ]](./images/diagram_044.svg)
+
+
+3D에서는 회전 순서가 더 중요합니다.
+
+![rotateX → rotateY](./images/diagram_045.svg)
+
+
+결과가 달라집니다.
+
+---
+
+## 29. 짐벌락과 쿼터니언 맛보기
+
+Euler 회전은 x, y, z축 회전을 순서대로 적용하는 방식입니다.
+
+```txt
+rotation = { x, y, z }
+```
+
+이 방식은 이해하기 쉽지만, 특정 각도에서 축이 겹쳐 회전 자유도가 사라지는 문제가 생깁니다.
+
+이걸 짐벌락이라고 합니다.
+
+쿼터니언은 이 문제를 줄이기 위해 3D 회전을 표현하는 방식입니다.
+
+입문 단계에서는 이렇게만 기억해도 됩니다.
+
+```txt
+Euler: 사람이 읽기 쉬운 회전값
+Quaternion: 컴퓨터가 안정적으로 회전하기 좋은 값
+```
+
+그래픽스 엔진에서는 보통:
+
+```txt
+UI에서는 Euler로 보여주고,
+내부 계산은 Quaternion으로 처리한다.
+```
+
+---
+
+## 30. Model / View / Projection
+
+3D 그래픽스에서 자주 보는 코드:
+
+```glsl
+gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+```
+
+이걸 흐름으로 보면:
+
+![로컬 좌표](./images/diagram_046.svg)
+
+
+각 행렬의 역할:
+
+```txt
+modelMatrix: 물체를 월드에 놓기
+viewMatrix: 카메라에서 본 것처럼 바꾸기
+projectionMatrix: 3D를 화면에 투영하기
+```
+
+---
+
+# Part 8. 실전 레시피
+
+## 31. 자주 쓰는 Vec2 함수 모음
+
+```js
+function add(a, b) {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+function sub(a, b) {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+function mul(v, scalar) {
+  return { x: v.x * scalar, y: v.y * scalar };
+}
+
+function dot(a, b) {
+  return a.x * b.x + a.y * b.y;
+}
+
+function cross2D(a, b) {
+  return a.x * b.y - a.y * b.x;
+}
+
+function length(v) {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+}
+
+function normalize(v) {
+  const len = length(v);
+  if (len === 0) return { x: 0, y: 0 };
+  return { x: v.x / len, y: v.y / len };
+}
+
+function rotatePoint(p, angle) {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+
+  return {
+    x: p.x * c - p.y * s,
+    y: p.x * s + p.y * c
+  };
+}
+```
+
+---
+
+## 32. 캐릭터 이동 예제
+
+```js
+function updatePlayer(player, input, dt) {
+  const move = { x: 0, y: 0 };
+
+  if (input.left) move.x -= 1;
+  if (input.right) move.x += 1;
+  if (input.up) move.y -= 1;
+  if (input.down) move.y += 1;
+
+  const dir = normalize(move);
+
+  player.position.x += dir.x * player.speed * dt;
+  player.position.y += dir.y * player.speed * dt;
+}
+```
+
+정규화가 없으면 대각선 이동이 더 빨라집니다.
+
+![오른쪽: 길이 1](./images/diagram_047.svg)
+
+
+그래서 대각선 입력은 정규화해야 합니다.
+
+---
+
+## 33. 마우스를 바라보고 총알 발사
+
+```js
+function getAngleToTarget(from, to) {
+  return Math.atan2(to.y - from.y, to.x - from.x);
+}
+
+function spawnBullet(player, mouse, speed) {
+  const angle = getAngleToTarget(player.position, mouse);
+
+  return {
+    position: { ...player.position },
+    velocity: {
+      x: Math.cos(angle) * speed,
+      y: Math.sin(angle) * speed
+    }
+  };
+}
+```
+
+업데이트:
+
+```js
+bullet.position.x += bullet.velocity.x * dt;
+bullet.position.y += bullet.velocity.y * dt;
+```
+
+---
+
+## 34. 공 튕기기 예제
+
+```js
+function updateBall(ball, bounds, dt) {
+  ball.position.x += ball.velocity.x * dt;
+  ball.position.y += ball.velocity.y * dt;
+
+  if (ball.position.x - ball.radius < bounds.left) {
+    ball.position.x = bounds.left + ball.radius;
+    ball.velocity.x *= -0.9;
+  }
+
+  if (ball.position.x + ball.radius > bounds.right) {
+    ball.position.x = bounds.right - ball.radius;
+    ball.velocity.x *= -0.9;
+  }
+
+  if (ball.position.y - ball.radius < bounds.top) {
+    ball.position.y = bounds.top + ball.radius;
+    ball.velocity.y *= -0.9;
+  }
+
+  if (ball.position.y + ball.radius > bounds.bottom) {
+    ball.position.y = bounds.bottom - ball.radius;
+    ball.velocity.y *= -0.9;
+  }
+}
+```
+
+`-0.9`는 방향을 뒤집으면서 속도를 90%만 유지한다는 뜻입니다.
+
+![- 부호: 반대 방향](./images/diagram_048.svg)
+
+
+---
+
+## 35. 마찰과 감쇠
+
+물체가 영원히 미끄러지지 않게 하려면 속도를 조금씩 줄입니다.
+
+```js
+velocity.x *= 0.98;
+velocity.y *= 0.98;
+```
+
+하지만 프레임마다 곱하면 fps에 따라 결과가 달라질 수 있습니다.
+
+조금 더 안정적인 방식:
+
+```js
+const damping = Math.exp(-friction * dt);
+
+velocity.x *= damping;
+velocity.y *= damping;
+```
+
+예:
+
+```js
+const friction = 5;
+const damping = Math.exp(-friction * dt);
+```
+
+---
+
+# Part 9. 헷갈림 방지 치트시트
+
+## 36. 삼각함수
+
+```txt
+cosθ = x 성분
+sinθ = y 성분
+```
+
+```js
+dir.x = Math.cos(angle);
+dir.y = Math.sin(angle);
+```
+
+## 37. atan2
+
+```js
+angle = Math.atan2(y, x);
+```
+
+마우스를 바라보기:
+
+```js
+angle = Math.atan2(mouse.y - y, mouse.x - x);
+```
+
+## 38. 회전
+
+```js
+x2 = x * cos - y * sin;
+y2 = x * sin + y * cos;
+```
+
+## 39. 90도 회전
+
+```js
+// 반시계 방향 90도
+x2 = -y;
+y2 = x;
+```
+
+```js
+// 시계 방향 90도
+x2 = y;
+y2 = -x;
+```
+
+## 40. 내적
+
+```js
+dot = ax * bx + ay * by;
+```
+
+![1: 같은 방향](./images/diagram_049.svg)
+
+
+## 41. 외적 2D
+
+```js
+cross = ax * by - ay * bx;
+```
+
+![양수: 왼쪽 / 반시계](./images/diagram_050.svg)
+
+
+## 42. 투영
+
+```js
+projection = normal * dot(v, normal);
+```
+
+## 43. 반사
+
+```js
+reflection = v - 2 * dot(v, normal) * normal;
+```
+
+## 44. 변환 순서
+
+![local](./images/diagram_051.svg)
+
+
+행렬:
+
+```txt
+world = T * R * S * local
+```
+
+## 45. 피벗 기준 회전
+
+```txt
+p2 = pivot + rotate(p - pivot, angle)
+```
+
+## 46. 속도/속력/가속도
+
+```txt
+속도 velocity: 방향 있음
+속력 speed: 방향 없음
+가속도 acceleration: 속도를 바꿈
+```
+
+코드:
+
+```js
+velocity += acceleration * dt;
+position += velocity * dt;
+```
+
+## 47. 물리엔진 큰 그림
+
+![1. 힘을 누적한다.](./images/diagram_052.svg)
+
+
+---
+
+# 48. 최종 기억 문장
+
+```txt
+벡터는 방향과 크기다.
+```
+
+```txt
+cos는 x, sin은 y다.
+```
+
+```txt
+내적은 같은 방향 성분을 본다.
+```
+
+```txt
+외적은 어느 쪽으로 도는지 본다.
+```
+
+```txt
+투영은 그림자를 떨어뜨리는 것이다.
+```
+
+```txt
+반사는 법선 방향 성분을 뒤집는 것이다.
+```
+
+```txt
+행렬은 이동/회전/스케일을 하나의 함수처럼 묶은 것이다.
+```
+
+```txt
+가속도는 속도를 바꾸고, 속도는 위치를 바꾼다.
+```
+
+```txt
+물체는 로컬에서 만들고, 월드로 변환하고, 충돌하면 법선 방향으로 반응한다.
+```
+
+---
+
+# 49. 다음에 이어서 보면 좋은 주제
+
+이 핸드북 다음 단계로는 아래 주제를 이어서 보면 좋습니다.
+
+![1. OBB 충돌과 SAT 분리축 정리](./images/diagram_053.svg)
+
+
+특히 물리엔진을 직접 만들고 싶다면 다음 순서는 이게 좋습니다.
+
+```txt
+AABB → Circle → OBB → SAT → Impulse → Angular velocity → Constraint
+```
+---
+
+# Part 10. 49번 다음에 보는 심화 내용
+
+49번에서는 다음 단계로 볼 주제들을 목록으로만 정리했습니다.  
+여기서는 그 주제들을 바로 이어서 읽을 수 있게 조금 더 자세히 설명합니다.
+
+이 Part의 목표는 이겁니다.
+
+```txt
+단순 충돌 판정에서 끝나지 않고,
+충돌 방향을 찾고,
+속도를 어떻게 바꿀지 계산하고,
+회전까지 자연스럽게 연결한다.
+```
+
+큰 흐름은 아래와 같습니다.
+
+![AABB](./images/diagram_054.svg)
+
+
+---
+
+## 50. AABB 충돌을 다시 보는 이유
+
+AABB는 **Axis-Aligned Bounding Box**입니다.  
+말 그대로 **축에 정렬된 박스**입니다.
+
+![AABB](./images/diagram_055.svg)
+
+
+회전하지 않은 사각형끼리 충돌하는지 볼 때 가장 쉽습니다.
+
+기억 문장:
+
+```txt
+AABB 충돌은 x축에서 겹치고, y축에서도 겹치면 충돌이다.
+```
+
+코드:
+
+```js
+function intersectAABB(a, b) {
+  return (
+    a.min.x <= b.max.x &&
+    a.max.x >= b.min.x &&
+    a.min.y <= b.max.y &&
+    a.max.y >= b.min.y
+  );
+}
+```
+
+중요한 건 이겁니다.
+
+```txt
+충돌 판정은 “겹쳤냐?”를 묻는 단계다.
+충돌 해결은 “얼마나, 어느 방향으로 밀어낼까?”를 묻는 단계다.
+```
+
+AABB 판정만 할 때는 겹쳤는지만 알면 됩니다.  
+하지만 물리엔진에서는 보통 **충돌 방향 normal**과 **침투 깊이 penetration**도 필요합니다.
+
+---
+
+## 51. AABB의 충돌 방향과 침투 깊이
+
+두 박스가 겹쳤을 때, 어느 방향으로 밀어낼지 알아야 합니다.
+
+예를 들어 오른쪽에서 박스가 벽에 박혔다면:
+
+![왼쪽 박스 A와 오른쪽 박스 B가 x축으로 겹친 상황](./images/diagram_056.svg)
+
+
+겹친 양이 x축에서 작으면 x축으로 밀어내고,  
+y축에서 작으면 y축으로 밀어냅니다.
+
+코드:
+
+```js
+function getAABBManifold(a, b) {
+  const overlapX = Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x);
+  const overlapY = Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y);
+
+  if (overlapX <= 0 || overlapY <= 0) {
+    return null;
+  }
+
+  const centerA = {
+    x: (a.min.x + a.max.x) / 2,
+    y: (a.min.y + a.max.y) / 2
+  };
+
+  const centerB = {
+    x: (b.min.x + b.max.x) / 2,
+    y: (b.min.y + b.max.y) / 2
+  };
+
+  if (overlapX < overlapY) {
+    return {
+      normal: { x: centerA.x < centerB.x ? -1 : 1, y: 0 },
+      penetration: overlapX
+    };
+  }
+
+  return {
+    normal: { x: 0, y: centerA.y < centerB.y ? -1 : 1 },
+    penetration: overlapY
+  };
+}
+```
+
+여기서 `normal`은 보통 **B에서 A를 밀어내는 방향**으로 정했습니다.  
+프로젝트마다 방향 기준은 다를 수 있으니 하나로 통일하는 게 중요합니다.
+
+---
+
+## 52. 원 충돌은 거리 비교다
+
+원과 원의 충돌은 아주 직관적입니다.
+
+```txt
+두 원의 중심 거리 < 두 반지름의 합
+```
+
+그림:
+
+![A 중심 ●────── d ──────● B 중심](./images/diagram_057.svg)
+
+
+코드:
+
+```js
+function intersectCircle(a, b) {
+  const dx = b.position.x - a.position.x;
+  const dy = b.position.y - a.position.y;
+
+  const r = a.radius + b.radius;
+
+  return dx * dx + dy * dy <= r * r;
+}
+```
+
+`sqrt`를 쓰지 않는 이유는 성능과 단순함 때문입니다.
+
+```txt
+거리 <= 반지름합
+```
+
+대신:
+
+```txt
+거리제곱 <= 반지름합제곱
+```
+
+으로 비교합니다.
+
+---
+
+## 53. 원 충돌의 normal과 penetration
+
+원 충돌에서는 normal도 쉽습니다.
+
+![normal = A 중심에서 B 중심으로 향하는 방향](./images/diagram_058.svg)
+
+
+코드:
+
+```js
+function getCircleManifold(a, b) {
+  const dx = b.position.x - a.position.x;
+  const dy = b.position.y - a.position.y;
+
+  const distSq = dx * dx + dy * dy;
+  const radiusSum = a.radius + b.radius;
+
+  if (distSq > radiusSum * radiusSum) {
+    return null;
+  }
+
+  const dist = Math.sqrt(distSq);
+
+  if (dist === 0) {
+    return {
+      normal: { x: 1, y: 0 },
+      penetration: radiusSum
+    };
+  }
+
+  return {
+    normal: {
+      x: dx / dist,
+      y: dy / dist
+    },
+    penetration: radiusSum - dist
+  };
+}
+```
+
+주의:
+
+```txt
+두 원의 중심이 완전히 같으면 방향을 정할 수 없다.
+```
+
+그래서 `dist === 0`일 때는 임시 방향을 하나 정해줍니다.
+
+---
+
+## 54. 원-박스 충돌
+
+원-박스 충돌은 처음 보면 어려워 보이지만, 핵심은 단순합니다.
+
+기억 문장:
+
+```txt
+원 중심에서 박스 안의 가장 가까운 점을 찾고,
+그 점과 원 중심의 거리를 비교한다.
+```
+
+그림:
+
+![AABB 박스 안/가장자리에서 원 중심과 가장 가까운 점을 찾는다.](./images/diagram_059.svg)
+
+
+AABB 박스 기준으로 가장 가까운 점은 `clamp`로 구합니다.
+
+```js
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+```
+
+코드:
+
+```js
+function intersectCircleAABB(circle, box) {
+  const closest = {
+    x: clamp(circle.position.x, box.min.x, box.max.x),
+    y: clamp(circle.position.y, box.min.y, box.max.y)
+  };
+
+  const dx = circle.position.x - closest.x;
+  const dy = circle.position.y - closest.y;
+
+  return dx * dx + dy * dy <= circle.radius * circle.radius;
+}
+```
+
+이 공식은 게임에서 정말 많이 씁니다.
+
+예:
+
+```txt
+플레이어 원형 히트박스 vs 벽 사각형
+총알 원형 히트박스 vs 박스 장애물
+아이템 획득 범위 vs 상자
+```
+
+## 54.1 원-박스 충돌의 normal과 penetration
+
+단순히 겹쳤는지 판정하는 것 외에, 물리가 반응하려면 충돌 법선(normal)과 겹침 깊이(penetration)가 필요합니다. 
+
+원 중심에서 박스 외부로 밀어내야 하므로, 가장 가까운 점(closest)에서 원 중심으로 향하는 벡터를 구해 normal을 도출합니다.
+
+코드:
+
+```js
+function getCircleAABBManifold(circle, box) {
+  const closest = {
+    x: clamp(circle.position.x, box.min.x, box.max.x),
+    y: clamp(circle.position.y, box.min.y, box.max.y)
+  };
+
+  const dx = circle.position.x - closest.x;
+  const dy = circle.position.y - closest.y;
+  const distSq = dx * dx + dy * dy;
+
+  if (distSq > circle.radius * circle.radius) {
+    return null; // 충돌 없음
+  }
+
+  const dist = Math.sqrt(distSq);
+
+  // 원의 중심이 박스 내부에 완전히 갇힌 경우 예외 처리
+  if (dist === 0) {
+    // 박스의 4면 중 가장 가까운 면을 찾아서 밀어냄
+    const dl = circle.position.x - box.min.x;
+    const dr = box.max.x - circle.position.x;
+    const dt = circle.position.y - box.min.y;
+    const db = box.max.y - circle.position.y;
+
+    const minOverlap = Math.min(dl, dr, dt, db);
+
+    if (minOverlap === dl) {
+      return { normal: { x: -1, y: 0 }, penetration: circle.radius + dl };
+    } else if (minOverlap === dr) {
+      return { normal: { x: 1, y: 0 }, penetration: circle.radius + dr };
+    } else if (minOverlap === dt) {
+      return { normal: { x: 0, y: -1 }, penetration: circle.radius + dt };
+    } else {
+      return { normal: { x: 0, y: 1 }, penetration: circle.radius + db };
+    }
+  }
+
+  return {
+    normal: { x: dx / dist, y: dy / dist },
+    penetration: circle.radius - dist
+  };
+}
+```
+
+이 함수를 통해 벽(AABB)에 부딪힌 동그란 캐릭터(Circle)를 적절히 밀어내고 미끄러지도록 처리할 수 있습니다.
+
+---
+
+## 55. 회전된 박스 OBB를 보는 감각
+
+OBB는 **Oriented Bounding Box**입니다.  
+즉, 회전된 박스입니다.
+
+![AABB: 월드 x/y축에 맞춰 선 박스](./images/diagram_060.svg)
+
+
+AABB는 x축, y축에 딱 맞게 서 있습니다.  
+OBB는 자기만의 x축, y축을 가지고 회전합니다.
+
+기억 문장:
+
+```txt
+OBB는 회전된 로컬 좌표계를 가진 박스다.
+```
+
+OBB를 표현하려면 보통 아래 정보가 필요합니다.
+
+```js
+const box = {
+  center: { x: 300, y: 200 },
+  halfSize: { x: 50, y: 25 },
+  rotation: Math.PI / 6
+};
+```
+
+그리고 박스의 로컬 축을 구합니다.
+
+```js
+function getBoxAxes(rotation) {
+  const c = Math.cos(rotation);
+  const s = Math.sin(rotation);
+
+  return {
+    xAxis: { x: c, y: s },
+    yAxis: { x: -s, y: c }
+  };
+}
+```
+
+## 80. 레이캐스팅 (Ray Casting) 기초
+
+레이캐스팅은 시작점(Origin)과 방향(Direction)을 가진 광선(Ray)을 쏘아 공간 속 물체와 충돌하는 지점을 계산하는 기법입니다.
+
+광선의 공식:
+```txt
+P(t) = rayOrigin + rayDir * t  (단, t >= 0)
+```
+
+![레이캐스팅 시각화](./images/diagram_076.svg)
+
+여기서:
+
+```txt
+xAxis = 박스의 오른쪽 방향
+ yAxis = 박스의 위쪽 또는 아래쪽 방향
+```
+
+화면 좌표계에서는 y 방향 때문에 “위쪽”이 헷갈릴 수 있지만,  
+중요한 건 두 축이 서로 직각이라는 점입니다.
+
+---
+
+## 56. SAT 분리축 정리
+
+SAT는 **Separating Axis Theorem**입니다.  
+한글로는 보통 **분리축 정리**라고 부릅니다.
+
+말은 어려운데 감각은 이겁니다.
+
+```txt
+어떤 축 하나라도 두 도형의 그림자가 겹치지 않으면 충돌하지 않는다.
+모든 후보 축에서 그림자가 겹치면 충돌한다.
+```
+
+투영을 “그림자”라고 했던 걸 떠올리면 됩니다.
+
+![도형 A와 B를 어떤 축에 그림자로 떨어뜨린다.](./images/diagram_061.svg)
+
+
+반대로:
+
+![axis ─────────────────────────→](./images/diagram_062.svg)
+
+
+SAT의 결론:
+
+```txt
+모든 중요한 축에서 겹쳐야 진짜 충돌이다.
+```
+
+---
+
+## 57. OBB vs OBB에서 검사할 축
+
+두 OBB가 충돌하는지 보려면 후보 축은 4개입니다.
+
+```txt
+박스 A의 x축
+박스 A의 y축
+박스 B의 x축
+박스 B의 y축
+```
+
+왜 이 네 개만 보면 될까요?
+
+사각형의 분리축은 각 변의 법선 방향입니다.  
+OBB의 변 방향과 법선 방향은 결국 박스의 로컬 x축/y축과 같습니다.
+
+코드 흐름:
+
+```txt
+1. 각 박스의 꼭짓점 4개를 구한다.
+2. 검사할 축 4개를 만든다.
+3. 각 축에 두 박스 꼭짓점을 투영한다.
+4. 투영 구간이 하나라도 안 겹치면 충돌 아님.
+5. 전부 겹치면 충돌.
+```
+
+---
+
+## 58. 점들을 축에 투영하기
+
+SAT에서 “점들을 축에 투영한다”는 말은, 각 꼭짓점을 축 위의 숫자로 바꾼다는 뜻입니다.
+
+점 하나를 축에 투영할 때는 내적을 씁니다.
+
+```txt
+projection = point · axis
+```
+
+여기서 결과는 2D 점이 아니라 **axis 위에서의 위치를 나타내는 숫자 하나**입니다.
+
+![2D 공간의 꼭짓점들](./images/diagram_063.svg)
+
+
+점 여러 개를 투영하면 숫자들이 나옵니다.
+
+```txt
+[3.2, 4.1, 7.8, 6.5]
+```
+
+이 중 최소값과 최대값이 그 도형의 “그림자 구간”입니다.
+
+```js
+function projectPoints(points, axis) {
+  let min = dot(points[0], axis);
+  let max = min;
+
+  for (let i = 1; i < points.length; i++) {
+    const p = dot(points[i], axis);
+    min = Math.min(min, p);
+    max = Math.max(max, p);
+  }
+
+  return { min, max };
+}
+```
+
+구간이 겹치는지 확인:
+
+```js
+function overlapInterval(a, b) {
+  return a.min <= b.max && b.min <= a.max;
+}
+
+function getIntervalOverlap(a, b) {
+  return Math.min(a.max, b.max) - Math.max(a.min, b.min);
+}
+```
+
+---
+
+## 59. OBB vs OBB 충돌 코드
+
+먼저 유틸 함수입니다.
+
+```js
+function dot(a, b) {
+  return a.x * b.x + a.y * b.y;
+}
+
+function normalize(v) {
+  const len = Math.hypot(v.x, v.y);
+
+  if (len === 0) {
+    return { x: 0, y: 0 };
+  }
+
+  return {
+    x: v.x / len,
+    y: v.y / len
+  };
+}
+```
+
+OBB 꼭짓점 구하기:
+
+```js
+function getOBBVertices(box) {
+  const axes = getBoxAxes(box.rotation);
+  const hx = box.halfSize.x;
+  const hy = box.halfSize.y;
+
+  const corners = [
+    { x: -hx, y: -hy },
+    { x:  hx, y: -hy },
+    { x:  hx, y:  hy },
+    { x: -hx, y:  hy }
+  ];
+
+  return corners.map(p => ({
+    x: box.center.x + axes.xAxis.x * p.x + axes.yAxis.x * p.y,
+    y: box.center.y + axes.xAxis.y * p.x + axes.yAxis.y * p.y
+  }));
+}
+```
+
+SAT 충돌 판정:
+
+```js
+function intersectOBB(a, b) {
+  const verticesA = getOBBVertices(a);
+  const verticesB = getOBBVertices(b);
+
+  const axesA = getBoxAxes(a.rotation);
+  const axesB = getBoxAxes(b.rotation);
+
+  const axes = [
+    axesA.xAxis,
+    axesA.yAxis,
+    axesB.xAxis,
+    axesB.yAxis
+  ];
+
+  for (const axis of axes) {
+    const n = normalize(axis);
+    const projA = projectPoints(verticesA, n);
+    const projB = projectPoints(verticesB, n);
+
+    if (!overlapInterval(projA, projB)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+```
+
+이제 회전된 박스끼리 충돌 여부를 검사할 수 있습니다.
+
+---
+
+## 60. SAT에서 충돌 normal과 penetration 구하기
+
+물리엔진에서는 `true/false`만으로 부족합니다.  
+충돌했다면 어느 방향으로 얼마나 밀어낼지도 필요합니다.
+
+SAT에서는 각 축의 겹침량을 계산하고, 가장 작은 겹침량을 찾습니다.
+
+```txt
+가장 적게 겹친 축 = 가장 적게 밀어내도 되는 방향
+```
+
+코드:
+
+```js
+function getOBBManifold(a, b) {
+  const verticesA = getOBBVertices(a);
+  const verticesB = getOBBVertices(b);
+
+  const axesA = getBoxAxes(a.rotation);
+  const axesB = getBoxAxes(b.rotation);
+
+  const axes = [
+    axesA.xAxis,
+    axesA.yAxis,
+    axesB.xAxis,
+    axesB.yAxis
+  ];
+
+  let minOverlap = Infinity;
+  let smallestAxis = null;
+
+  for (const axis of axes) {
+    const n = normalize(axis);
+    const projA = projectPoints(verticesA, n);
+    const projB = projectPoints(verticesB, n);
+    const overlap = getIntervalOverlap(projA, projB);
+
+    if (overlap <= 0) {
+      return null;
+    }
+
+    if (overlap < minOverlap) {
+      minOverlap = overlap;
+      smallestAxis = n;
+    }
+  }
+
+  const centerDelta = {
+    x: b.center.x - a.center.x,
+    y: b.center.y - a.center.y
+  };
+
+  if (dot(centerDelta, smallestAxis) < 0) {
+    smallestAxis = {
+      x: -smallestAxis.x,
+      y: -smallestAxis.y
+    };
+  }
+
+  return {
+    normal: smallestAxis,
+    penetration: minOverlap
+  };
+}
+```
+
+이제 OBB 충돌도 아래 정보를 얻을 수 있습니다.
+
+```txt
+충돌 여부
+충돌 방향 normal
+겹친 깊이 penetration
+```
+
+---
+
+## 61. 위치 보정: 겹친 물체를 밀어내기
+
+충돌한 두 물체가 서로 겹쳐 있으면, 일단 위치를 보정해야 합니다.
+
+가장 단순한 방법:
+
+```txt
+A를 normal 반대 방향으로 절반 밀고,
+B를 normal 방향으로 절반 민다.
+```
+
+코드:
+
+```js
+function positionalCorrection(a, b, manifold) {
+  const percent = 0.8;
+  const slop = 0.01;
+
+  const correctionMag = Math.max(manifold.penetration - slop, 0) * percent;
+
+  const correction = {
+    x: manifold.normal.x * correctionMag,
+    y: manifold.normal.y * correctionMag
+  };
+
+  a.position.x -= correction.x * 0.5;
+  a.position.y -= correction.y * 0.5;
+
+  b.position.x += correction.x * 0.5;
+  b.position.y += correction.y * 0.5;
+}
+```
+
+`slop`은 아주 작은 겹침은 무시하기 위한 값입니다.  
+이게 없으면 물체가 미세하게 떨릴 수 있습니다.
+
+---
+
+## 62. 속도 반응: 충돌하면 속도를 바꿔야 한다
+
+위치만 밀어내면 물체는 다음 프레임에 다시 파고들 수 있습니다.  
+그래서 속도도 바꿔야 합니다.
+
+충돌 속도 계산:
+
+![relativeVelocity = velocityB - velocityA](./images/diagram_064.svg)
+
+
+`normalVelocity`가 음수면 두 물체가 서로 가까워지는 중입니다.
+
+![normalVelocity < 0 → 서로 접근 중](./images/diagram_065.svg)
+
+
+이미 멀어지는 중이면 튕길 필요가 없습니다.
+
+---
+
+## 63. 임펄스 impulse
+
+임펄스는 어렵게 들리지만 감각은 단순합니다.
+
+```txt
+힘을 아주 짧은 시간 동안 강하게 준 결과가 임펄스다.
+```
+
+공을 벽에 던졌을 때, 벽이 공을 순간적으로 툭 밀어냅니다.  
+그 “툭”이 임펄스입니다.
+
+기억 문장:
+
+```txt
+임펄스는 속도를 순간적으로 바꾸는 충돌 반응이다.
+```
+
+단순한 2D 충돌 임펄스 공식:
+
+```txt
+j = -(1 + e)(relativeVelocity · normal) / (invMassA + invMassB)
+```
+
+여기서:
+
+![e = 반발계수 restitution](./images/diagram_066.svg)
+
+
+반발계수 `e`는 얼마나 튕기는지를 뜻합니다.
+
+```txt
+e = 0    전혀 안 튕김
+ e = 0.5  적당히 튕김
+ e = 1    완전 탄성 충돌에 가까움
+```
+
+---
+
+## 64. 임펄스로 속도 바꾸기
+
+코드:
+
+```js
+function resolveCollisionVelocity(a, b, manifold) {
+  const rv = {
+    x: b.velocity.x - a.velocity.x,
+    y: b.velocity.y - a.velocity.y
+  };
+
+  const velAlongNormal = dot(rv, manifold.normal);
+
+  if (velAlongNormal > 0) {
+    return;
+  }
+
+  const e = Math.min(a.restitution, b.restitution);
+  const invMassA = a.invMass;
+  const invMassB = b.invMass;
+
+  const j = -(1 + e) * velAlongNormal / (invMassA + invMassB);
+
+  const impulse = {
+    x: manifold.normal.x * j,
+    y: manifold.normal.y * j
+  };
+
+  a.velocity.x -= impulse.x * invMassA;
+  a.velocity.y -= impulse.y * invMassA;
+
+  b.velocity.x += impulse.x * invMassB;
+  b.velocity.y += impulse.y * invMassB;
+}
+```
+
+여기서 `invMass`를 쓰는 이유:
+
+```txt
+무거운 물체는 속도가 덜 바뀐다.
+가벼운 물체는 속도가 더 많이 바뀐다.
+```
+
+질량이 무한대인 바닥이나 벽은 이렇게 둘 수 있습니다.
+
+```js
+const wall = {
+  invMass: 0
+};
+```
+
+`invMass = 0`이면 임펄스를 받아도 속도가 변하지 않습니다.
+
+---
+
+## 65. 마찰 impulse 맛보기
+
+충돌 normal 방향만 처리하면 물체가 너무 미끄럽게 느껴집니다.  
+마찰은 normal에 수직인 방향, 즉 접선 방향에서 속도를 줄이는 효과입니다.
+
+```txt
+normal 방향: 튕김
+ tangent 방향: 미끄러짐 감소
+```
+
+접선 방향 구하기:
+
+```js
+function resolveFriction(a, b, manifold, normalImpulseMag) {
+  const rv = {
+    x: b.velocity.x - a.velocity.x,
+    y: b.velocity.y - a.velocity.y
+  };
+
+  const n = manifold.normal;
+  const tangent = normalize({
+    x: rv.x - n.x * dot(rv, n),
+    y: rv.y - n.y * dot(rv, n)
+  });
+
+  const jt = -dot(rv, tangent) / (a.invMass + b.invMass);
+
+  const mu = Math.sqrt(a.friction * b.friction);
+  const maxFriction = normalImpulseMag * mu;
+
+  const frictionMag = clamp(jt, -maxFriction, maxFriction);
+
+  const frictionImpulse = {
+    x: tangent.x * frictionMag,
+    y: tangent.y * frictionMag
+  };
+
+  a.velocity.x -= frictionImpulse.x * a.invMass;
+  a.velocity.y -= frictionImpulse.y * a.invMass;
+
+  b.velocity.x += frictionImpulse.x * b.invMass;
+  b.velocity.y += frictionImpulse.y * b.invMass;
+}
+```
+
+처음부터 마찰까지 완벽히 구현하려고 하면 복잡해집니다.  
+입문 단계에서는 아래 순서가 좋습니다.
+
+```txt
+1. 위치 보정
+2. normal 방향 속도 반응
+3. 나중에 마찰 추가
+```
+
+---
+
+## 66. 각속도 angular velocity
+
+지금까지는 위치와 선속도만 봤습니다.
+
+```txt
+position
+velocity
+acceleration
+```
+
+회전 물리에서는 여기에 회전 버전이 생깁니다.
+
+```txt
+rotation
+angularVelocity
+angularAcceleration
+```
+
+비교하면 쉽습니다.
+
+| 직선 운동 | 회전 운동 |
+|---|---|
+| 위치 position | 각도 rotation |
+| 속도 velocity | 각속도 angularVelocity |
+| 가속도 acceleration | 각가속도 angularAcceleration |
+| 힘 force | 토크 torque |
+| 질량 mass | 관성 모멘트 inertia |
+
+기억 문장:
+
+```txt
+각속도는 각도가 얼마나 빨리 변하는가다.
+```
+
+코드:
+
+```js
+body.rotation += body.angularVelocity * dt;
+```
+
+각도도 위치와 같은 방식으로 업데이트됩니다.
+
+![위치 += 속도 * dt](./images/diagram_067.svg)
+
+
+---
+
+## 67. 토크 torque
+
+힘은 물체를 밀어서 움직입니다.  
+토크는 물체를 돌립니다.
+
+기억 문장:
+
+```txt
+토크는 회전을 만드는 힘이다.
+```
+
+문을 생각하면 쉽습니다.
+
+```txt
+문 손잡이를 밀면 잘 돈다.
+문 경첩 가까이를 밀면 잘 안 돈다.
+```
+
+왜냐하면 회전축에서 멀수록 토크가 커지기 때문입니다.
+
+2D 토크 공식:
+
+```txt
+torque = r × F
+```
+
+2D 외적 스칼라 버전:
+
+```js
+function cross2(a, b) {
+  return a.x * b.y - a.y * b.x;
+}
+```
+
+힘을 어떤 지점에 가할 때:
+
+```js
+function applyForceAtPoint(body, force, point) {
+  body.force.x += force.x;
+  body.force.y += force.y;
+
+  const r = {
+    x: point.x - body.position.x,
+    y: point.y - body.position.y
+  };
+
+  body.torque += cross2(r, force);
+}
+```
+
+`r`은 물체 중심에서 힘이 작용한 지점까지의 벡터입니다.
+
+---
+
+## 68. 관성 모멘트 inertia
+
+질량이 직선 운동에서 “움직이기 어려움”이라면,  
+관성 모멘트는 회전 운동에서 “돌리기 어려움”입니다.
+
+기억 문장:
+
+```txt
+관성 모멘트는 회전 버전의 질량이다.
+```
+
+같은 질량이라도 길게 퍼져 있으면 돌리기 어렵습니다.
+
+```txt
+작은 공: 돌리기 쉬움
+긴 막대: 돌리기 어려움
+```
+
+박스의 관성 모멘트 예시:
+
+```txt
+I = mass * (width² + height²) / 12
+```
+
+코드:
+
+```js
+function boxInertia(mass, width, height) {
+  return mass * (width * width + height * height) / 12;
+}
+```
+
+보통 계산에서는 역질량처럼 역관성도 씁니다.
+
+```js
+body.invInertia = body.inertia === 0 ? 0 : 1 / body.inertia;
+```
+
+---
+
+## 69. 회전까지 포함한 물리 업데이트
+
+기본 물리 업데이트는 이렇게 확장됩니다.
+
+```js
+function integrate(body, dt) {
+  if (body.invMass === 0) {
+    return;
+  }
+
+  const acceleration = {
+    x: body.force.x * body.invMass,
+    y: body.force.y * body.invMass
+  };
+
+  body.velocity.x += acceleration.x * dt;
+  body.velocity.y += acceleration.y * dt;
+
+  body.position.x += body.velocity.x * dt;
+  body.position.y += body.velocity.y * dt;
+
+  const angularAcceleration = body.torque * body.invInertia;
+
+  body.angularVelocity += angularAcceleration * dt;
+  body.rotation += body.angularVelocity * dt;
+
+  body.force.x = 0;
+  body.force.y = 0;
+  body.torque = 0;
+}
+```
+
+여기까지 오면 물체는 이제:
+
+```txt
+힘을 받으면 움직이고,
+중심에서 벗어난 힘을 받으면 회전한다.
+```
+
+---
+
+## 70. 충돌 지점과 회전 반응
+
+실제 충돌에서는 물체 중심끼리만 부딪히지 않습니다.  
+대부분은 모서리나 옆면의 특정 지점에서 충돌합니다.
+
+![충돌점](./images/diagram_068.svg)
+
+
+충돌점이 중심에서 벗어나 있으면 물체는 회전합니다.
+
+그래서 회전까지 포함한 임펄스는 더 복잡해집니다.
+
+필요한 값:
+
+![ra = 충돌점 - A 중심](./images/diagram_069.svg)
+
+
+충돌점의 속도는 선속도 + 회전 때문에 생기는 속도를 합쳐야 합니다.
+
+2D에서 각속도가 만드는 접선 속도:
+
+```js
+function crossScalarVec(s, v) {
+  return {
+    x: -s * v.y,
+    y:  s * v.x
+  };
+}
+```
+
+충돌점의 상대속도:
+
+```js
+const velAAtContact = add(a.velocity, crossScalarVec(a.angularVelocity, ra));
+const velBAtContact = add(b.velocity, crossScalarVec(b.angularVelocity, rb));
+const rv = sub(velBAtContact, velAAtContact);
+```
+
+이 단계는 처음에는 어려워도 괜찮습니다.  
+핵심 감각은 이것만 기억하면 됩니다.
+
+```txt
+중심에서 벗어난 충돌은 회전을 만든다.
+```
+
+---
+
+## 71. Constraint 제약 조건 맛보기
+
+Constraint는 물체의 움직임에 조건을 거는 것입니다.
+
+예:
+
+```txt
+두 물체 사이 거리를 일정하게 유지한다.
+캐릭터 발이 바닥을 뚫고 내려가지 않게 한다.
+문이 경첩을 기준으로만 돌게 한다.
+로프 길이 이상 멀어지지 않게 한다.
+```
+
+기억 문장:
+
+```txt
+Constraint는 “이 조건을 만족하도록 위치와 속도를 고치는 규칙”이다.
+```
+
+가장 쉬운 예는 거리 제약입니다.
+
+```txt
+A와 B 사이 거리는 항상 length여야 한다.
+```
+
+단순 위치 보정 코드:
+
+```js
+function solveDistanceConstraint(a, b, targetLength) {
+  const delta = {
+    x: b.position.x - a.position.x,
+    y: b.position.y - a.position.y
+  };
+
+  const dist = Math.hypot(delta.x, delta.y);
+
+  if (dist === 0) {
+    return;
+  }
+
+  const error = dist - targetLength;
+  const n = {
+    x: delta.x / dist,
+    y: delta.y / dist
+  };
+
+  const correction = {
+    x: n.x * error * 0.5,
+    y: n.y * error * 0.5
+  };
+
+  a.position.x += correction.x;
+  a.position.y += correction.y;
+
+  b.position.x -= correction.x;
+  b.position.y -= correction.y;
+}
+```
+
+이걸 여러 번 반복하면 로프, 천, 관절 같은 효과의 기초가 됩니다.
+
+---
+
+## 72. 쿼터니언을 왜 배우는가
+
+2D에서는 각도 하나면 회전이 끝납니다.
+
+```txt
+rotation = 30도
+```
+
+하지만 3D에서는 축이 3개입니다.
+
+```txt
+rotateX
+rotateY
+rotateZ
+```
+
+문제는 회전 순서가 결과를 바꾼다는 점입니다.
+
+![X → Y → Z 회전](./images/diagram_070.svg)
+
+
+두 결과가 다릅니다.
+
+그리고 Euler 회전은 짐벌락 문제가 생길 수 있습니다.
+
+쿼터니언은 이 문제를 줄이고, 3D 회전을 안정적으로 다루기 위한 도구입니다.
+
+처음에는 이렇게만 기억해도 됩니다.
+
+```txt
+Euler = 사람이 보기 쉬운 회전값
+Quaternion = 컴퓨터가 안정적으로 회전 계산하기 좋은 값
+```
+
+게임엔진에서 보통:
+
+```txt
+Inspector에는 Euler 각도를 보여주고,
+내부 계산은 Quaternion으로 한다.
+```
+
+---
+
+## 73. 카메라 행렬과 MVP
+
+3D 그래픽스 렌더링 파이프라인에서 정점(Vertices)은 최종적으로 모니터 화면에 그려지기 위해 좌표계 변환을 거칩니다.
+
+![local](./images/diagram_071.svg)
+
+
+GLSL Vertex Shader에서 정점을 변환하는 표준 행렬 곱셈 연산:
+
+```glsl
+gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+```
+
+### 73.1 각 행렬의 상세 기하학적 의미 및 수학적 구조
+
+1. **Model Matrix (모델 행렬): 로컬 공간 $\rightarrow$ 월드 공간**
+   * 물체를 크기 조절($S$), 회전($R$), 이동($T$)하여 월드 내의 특정 절대 위치에 배치합니다.
+   * $M = T \cdot R \cdot S$
+2. **View Matrix (뷰 행렬): 월드 공간 $\rightarrow$ 카메라(뷰) 공간**
+   * 세상 모든 물체를 **카메라 기준의 새로운 좌표계**로 재배치합니다. 카메라는 원점 `(0, 0, 0)`에 위치하고 카메라가 바라보는 시선 방향이 $-z$ 축이 되도록 세상을 반대 방향으로 평행이동 및 회전시킵니다.
+   * **LookAt 행렬 공식:** 카메라 위치 $\vec{P}$, 타겟 방향 $\vec{T}$, 카메라 상단 하늘 방향 $\vec{U}$ 벡터를 통해 방향 축들(우측 $\vec{R} = \vec{D} \times \vec{U}$, 상단 $\vec{Up} = \vec{R} \times \vec{D}$, 시선 방향 $\vec{D} = \text{normalize}(\vec{P} - \vec{T})$)을 구한 뒤 아래와 같은 합성 행렬로 구성합니다.
+     $$V = \begin{bmatrix} R_x & R_y & R_z & 0 \\ Up_x & Up_y & Up_z & 0 \\ D_x & D_y & D_z & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix} \cdot \begin{bmatrix} 1 & 0 & 0 & -P_x \\ 0 & 1 & 0 & -P_y \\ 0 & 0 & 1 & -P_z \\ 0 & 0 & 0 & 1 \end{bmatrix}$$
+3. **Projection Matrix (투영 행렬): 카메라 공간 $\rightarrow$ 클립 공간**
+   * 3D 카메라 공간을 클립 공간(가시 범위 내부)으로 찌그러뜨려 $2D$ 스크린 영역으로 투영합니다.
+
+---
+
+## 74. 원근 투영 perspective projection 감각
+
+원근 투영은 멀리 있는 물체일수록 작게 보이게 만들어 인간의 눈과 카메라 렌즈의 원근감을 구현합니다.
+
+```txt
+가까운 물체: 크게 보임
+먼 물체: 작게 보임
+```
+
+### 74.1 원근 분할 (Perspective Divide)의 작동 원리
+
+투영 행렬을 정점에 곱하면, 정점의 동차좌표 $w$값에 깊이값 $z$에 비례하는 크기가 암묵적으로 저장됩니다.
+
+1. **투영 연산 결과:**
+   $$\vec{P}_{clip} = M_{proj} \cdot \vec{P}_{camera} = (x_{clip}, y_{clip}, z_{clip}, w_{clip})^T$$
+   * 여기서 $w_{clip}$ 값은 카메라로부터의 거리에 비례하는 값(보통 $-z_{camera}$)이 자동으로 들어갑니다.
+2. **원근 분할 (GPU 처리):**
+   * 하드웨어 GPU는 래스터라이저 단계 직전에 $x, y, z$ 성분을 $w$로 강제 나눕니다. 이를 **원근 분할**이라 하며, 그 결과 좌표는 $[-1, 1]$ 범위의 **정규화된 디바이스 좌표 (NDC, Normalized Device Coordinates)**가 됩니다.
+   $$\vec{P}_{ndc} = \left(\frac{x_{clip}}{w_{clip}}, \frac{y_{clip}}{w_{clip}}, \frac{z_{clip}}{w_{clip}}\right)$$
+   * 분모 $w_{clip}$가 클수록(즉, 멀리 있을수록) 나눈 결과 좌표의 절댓값 크기가 원점에 가까워져(작아져) 멀리 있는 물체가 모니터 화면 중심 부근에 촘촘히 뭉쳐 작게 그려지게 됩니다.
+
+반대로 **정사영 (Orthographic Projection)** 행렬은 $w$ 성분을 그냥 $1$로 보존하기 때문에 원근 분할을 해도 크기가 작아지지 않고 거리에 상관없이 원래의 기하학적 크기를 고스란히 유지합니다.
+
+```txt
+Perspective: 3D 게임, 카메라, FPS, 레이싱
+Orthographic: 2D 게임, UI, CAD, 전략 게임 미니맵
+```
+
+초보자가 헷갈리는 부분:
+
+```txt
+projectionMatrix는 물체를 이동시키는 행렬이 아니다.
+3D 공간을 화면에 찍기 위한 렌즈 같은 행렬이다.
+```
+
+---
+
+## 75. WebGL의 MVP를 코드 감각으로 보기
+
+WebGL에서는 보통 CPU에서 행렬을 만들고 GPU 셰이더에 넘깁니다.
+
+```js
+const model = makeModelMatrix(object);
+const view = camera.viewMatrix;
+const projection = camera.projectionMatrix;
+
+const mvp = multiply(projection, multiply(view, model));
+```
+
+셰이더:
+
+```glsl
+attribute vec3 position;
+uniform mat4 uMVP;
+
+void main() {
+  gl_Position = uMVP * vec4(position, 1.0);
+}
+```
+
+중요한 순서:
+
+```txt
+MVP = Projection * View * Model
+```
+
+점에 실제 적용되는 순서:
+
+```txt
+local → model → view → projection
+```
+
+행렬 곱에서는 오른쪽부터 적용된다는 점을 다시 떠올리면 됩니다.
+
+---
+
+## 76. 다음 학습 순서 추천
+
+여기까지 본 뒤에는 목적에 따라 갈림길이 생깁니다.
+
+## 76.1 물리엔진 쪽으로 가고 싶다면
+
+```txt
+AABB
+Circle
+Circle vs AABB
+OBB
+SAT
+Manifold
+Impulse
+Friction
+Angular velocity
+Torque
+Constraint solver
+```
+
+간단한 미니 프로젝트:
+
+```txt
+1. 공 여러 개가 바닥과 벽에 튕기는 시뮬레이션
+2. 원끼리 충돌하고 튕기는 시뮬레이션
+3. 회전 박스끼리 SAT로 충돌 판정
+4. 박스가 충돌하면 밀려나고 속도가 바뀌는 예제
+5. 로프로 연결된 공 2개 만들기
+```
+
+## 76.2 그래픽스 쪽으로 가고 싶다면
+
+```txt
+Vec3
+Mat4
+Model matrix
+View matrix
+Projection matrix
+Camera
+Normal matrix
+Lighting
+Quaternion
+Scene graph
+```
+
+간단한 미니 프로젝트:
+
+![1. 큐브 하나를 회전시키기](./images/diagram_072.svg)
+
+
+## 76.3 게임플레이 쪽으로 가고 싶다면
+
+![Steering behavior](./images/diagram_073.svg)
+
+
+간단한 미니 프로젝트:
+
+![1. 적이 플레이어를 부드럽게 추적하기](./images/diagram_074.svg)
+
+
+---
+
+## 77. 심화 치트시트
+
+## 77.1 SAT
+
+```txt
+도형을 후보 축에 투영한다.
+하나라도 안 겹치는 축이 있으면 충돌 아님.
+모든 축에서 겹치면 충돌.
+가장 적게 겹친 축이 충돌 normal 후보.
+```
+
+## 77.2 원-박스 충돌
+
+```txt
+원 중심에서 박스 내부의 가장 가까운 점을 찾는다.
+그 점과 원 중심의 거리가 반지름보다 작으면 충돌.
+```
+
+## 77.3 임펄스
+
+```txt
+임펄스는 충돌 순간 속도를 바꾸는 값이다.
+normal 방향 상대속도가 음수일 때만 튕긴다.
+```
+
+## 77.4 각속도
+
+```txt
+rotation += angularVelocity * dt
+```
+
+## 77.5 토크
+
+```txt
+torque = r × F
+```
+
+## 77.6 관성 모멘트
+
+```txt
+회전 버전의 질량.
+크고 길게 퍼진 물체일수록 돌리기 어렵다.
+```
+
+## 77.7 MVP
+
+```txt
+gl_Position = Projection * View * Model * position
+```
+
+```txt
+Model: 물체를 월드에 놓기
+View: 카메라 기준으로 보기
+Projection: 3D를 화면에 찍기
+```
+
+---
+
+## 79. LERP (선형 보간)
+
+> **실무 맥락 (Mental Hook) - 부드러운 카메라 추적 및 UI 페이드인:**
+> 화면 속 카메라가 플레이어를 1:1로 칼같이 고정해 쫓아다니면 화면이 끊기거나 덜덜 떨리며 부자연스럽게 보입니다.
+> 이때 플레이어 위치와 현재 카메라 위치 사이의 거리를 구한 뒤, 매 프레임 그 거리의 10%(`t = 0.1`)만큼씩만 부드럽게 좁혀오도록 중간값을 계산하는 기법이 바로 **LERP (선형 보간)**입니다.
+> 캐릭터의 부드러운 회전 각도 보간, UI 페이드인/아웃(불투명도를 0에서 1로 시간에 따라 부드럽게 조절), 3D 모델의 관절 애니메이션 연결 등 그래픽스와 애니메이션의 90% 이상이 LERP를 기반으로 동작합니다.
+
+공식:
+```txt
+lerp(a, b, t) = a + (b - a) * t
+```
+
+코드:
+```js
+// [JavaScript - CPU 보간 연산]
+
+// 1. 실수 단일 값의 선형 보간 (t 비중에 따라 중간값 반환)
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+// 2. 2D 좌표 벡터 간의 선형 보간
+function lerpVec2(a, b, t) {
+  return {
+    x: lerp(a.x, b.x, t),
+    y: lerp(a.y, b.y, t)
+  };
+}
+```
+
+![LERP 시각화](./images/diagram_075.svg)
+
+### 🟠 실시간 인터랙티브 시각화 (웹 캔버스)
+아래 슬라이더를 마우스로 조절하여 $t$ 값에 따라 중간점 $P$의 위치가 시작점 $A$와 종료점 $B$ 사이에서 어떻게 연산되는지 눈으로 확인해보세요.
+
+<div id="interactive-lerp"></div>
+
+---
+
+## 80. 레이캐스팅 (Ray Casting) 기초
+
+레이캐스팅은 시작점(Origin)과 방향(Direction)을 가진 광선(Ray)을 쏘아 공간 속 물체와 충돌하는 지점을 계산하는 기법입니다.
+
+광선의 공식:
+```txt
+P(t) = rayOrigin + rayDir * t  (단, t >= 0)
+```
+
+![레이캐스팅 시각화](./images/diagram_076.svg)
+
+### 80.1 광선 vs 원 (Ray-vs-Circle) 충돌
+광선 공식과 원의 방정식 $(P - C) \cdot (P - C) = R^2$를 조합하여 2차 방정식을 풀어서 만나는 시간 $t$를 구합니다.
+
+코드:
+```js
+function raycastCircle(rayOrigin, rayDir, circleCenter, radius) {
+  const oc = {
+    x: rayOrigin.x - circleCenter.x,
+    y: rayOrigin.y - circleCenter.y
+  };
+
+  // rayDir이 정규화되어 있다면 a = 1
+  const a = rayDir.x * rayDir.x + rayDir.y * rayDir.y;
+  const b = 2 * (oc.x * rayDir.x + oc.y * rayDir.y);
+  const c = (oc.x * oc.x + oc.y * oc.y) - radius * radius;
+
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) {
+    return null; // 충돌 없음
+  }
+
+  const sqrtD = Math.sqrt(discriminant);
+  const t1 = (-b - sqrtD) / (2 * a);
+  const t2 = (-b + sqrtD) / (2 * a);
+
+  // 가장 가까운 전방 충돌 지점(t >= 0) 반환
+  if (t1 >= 0) return t1;
+  if (t2 >= 0) return t2;
+
+  return null;
+}
+```
+
+> **실무 활용:**
+> * 마우스 포인터 클릭으로 3D 오브젝트를 선택하는 **Ray Picking**
+> * 총기 난사 게임(FPS)의 즉발형 탄환 판정(**Hitscan**)
+> * 적 캐릭터의 시야 장애물 차단 검사(**Line of Sight**)
+
+---
+
+## 81. 무게중심 좌표 (Barycentric Coordinates)
+
+무게중심 좌표는 삼각형 내부의 점 $P$를 삼각형의 세 꼭짓점 $A, B, C$의 가중치 합($u, v, w$)으로 나타내는 시스템입니다.
+
+공식:
+```txt
+P = u * A + v * B + w * C
+(단, u + v + w = 1 이며 삼각형 내부의 점일 경우 u, v, w >= 0)
+```
+
+![무게중심 좌표 시각화](./images/diagram_077.svg)
+
+코드:
+```js
+function getBarycentric(p, a, b, c) {
+  const v0 = { x: b.x - a.x, y: b.y - a.y };
+  const v1 = { x: c.x - a.x, y: c.y - a.y };
+  const v2 = { x: p.x - a.x, y: p.y - a.y };
+
+  const den = v0.x * v1.y - v1.x * v0.y; // cross2D(v0, v1)
+  if (den === 0) return null; // 삼각형이 성립하지 않음
+
+  const v = (v2.x * v1.y - v1.x * v2.y) / den;
+  const w = (v0.x * v2.y - v2.x * v0.y) / den;
+  const u = 1 - v - w;
+
+  return { u, v, w };
+}
+```
+
+> **실무 활용:**
+> * **삼각형 내부 판정:** 점 $P$의 무게중심 좌표 $u, v, w$가 모두 0 이상인지 검사합니다.
+> * **텍스처 보간 (UV Interpolation):** 래스터라이저가 꼭짓점 $A, B, C$의 텍스처 좌표나 색상을 내부 픽셀로 부드럽게 채울 때 세 가중치 $u, v, w$를 가중합하여 결정합니다.
+
+---
+
+## 82. 법선 행렬 (Normal Matrix)의 비밀
+
+오브젝트의 3D 정점 위치는 변환 행렬(Model-View)을 곱해 화면에 표시합니다. 하지만 모델에 **비균등 스케일 (Non-uniform Scale, 예: x축으로만 2배 늘리기)**을 적용한 상태에서 표면 법선 벡터(Normal Vector)에 동일한 변환 행렬을 곱하면 법선 벡터가 더 이상 표면에 수직(orthogonal)이지 않게 왜곡됩니다.
+
+법선은 표면의 접선 벡터 $\vec{T}$와 항상 수직이어야 하므로 변환 후에도 이를 보존하려면 법선 벡터를 변환할 때 다음의 **법선 행렬**을 계산해 곱해야 합니다.
+
+공식:
+```txt
+Normal Matrix = transpose(inverse(Model-View Matrix))
+```
+
+![법선 행렬 시각화](./images/diagram_078.svg)
+
+> **실무 활용:**
+> * 비균등 스케일링이 가능한 3D 월드의 셰이더 프로그래밍 시, 표면 법선을 변환할 때 일반 변환 행렬 대신 법선 행렬을 사용해야 광선 연산(디퓨즈, 스펙큘러 조명)이 사실적으로 처리됩니다.
+
+---
+
+## 83. 베지에 곡선 (Bézier Curve) 맛보기
+
+베지에 곡선은 제어점(Control Points)들의 조합을 통해 정교하고 부드러운 곡선을 정의하는 수학적 기법입니다.
+
+### 83.1 3차 베지에 곡선 (Cubic Bézier Curve)
+4개의 제어점 $P_0, P_1, P_2, P_3$과 매개변수 $t \in [0, 1]$로 표현됩니다.
+
+![3차 베지에 곡선](./images/diagram_079.svg)
+
+코드:
+```js
+function cubicBezier(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  const mt2 = mt * mt;
+  const mt3 = mt2 * mt;
+  const t2 = t * t;
+  const t3 = t2 * t;
+
+  return {
+    x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+    y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y
+  };
+}
+```
+
+> **실무 활용:**
+> * 캐릭터의 부드러운 경로 이동 및 카메라 앵글 회전선 정의
+> * 일러스트레이터 펜 도구나 SVG의 곡선 묘사
+> * CSS 및 UI 라이브러리의 애니메이션 가속도 조절(Easing Curve)
+
+---
+
+## 84. 마지막으로 기억할 큰 그림
+
+```txt
+수학은 공식을 외우는 게 아니라,
+공간에서 무슨 일이 일어나는지 숫자로 표현하는 도구다.
+```
+
+```txt
+벡터는 방향과 크기를 말하고,
+내적은 같은 방향 성분을 보고,
+외적은 회전 방향을 보고,
+행렬은 좌표계를 옮기고,
+미분은 변화량을 보고,
+임펄스는 충돌 순간 속도를 바꾼다.
+```
+
+그래픽스와 물리엔진은 결국 같은 질문을 계속 반복합니다.
+
+```txt
+어디에 있는가?
+어느 방향을 보는가?
+얼마나 빠르게 움직이는가?
+무엇과 부딪혔는가?
+부딪힌 뒤 어떻게 바뀌는가?
+```
+
+이 질문에 답하기 위해 이 핸드북의 개념들이 연결됩니다.
+

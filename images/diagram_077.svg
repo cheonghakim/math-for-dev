@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240" style="background-color: #ffffff;">
+  <!-- Background -->
+  <rect width="400" height="240" fill="#ffffff" />
+  
+  <!-- Title -->
+  <text x="20" y="30" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">무게중심 좌표 (Barycentric Coordinates)</text>
+  
+  <!-- Sub-triangle areas (colored fills with transparency) -->
+  <!-- PBC (Area A_A associated with weight u of A) -->
+  <polygon points="200,140 320,190 80,190" fill="#ef4444" fill-opacity="0.1" />
+  
+  <!-- PCA (Area A_B associated with weight v of B) -->
+  <polygon points="200,140 80,190 200,60" fill="#3b82f6" fill-opacity="0.1" />
+  
+  <!-- PAB (Area A_C associated with weight w of C) -->
+  <polygon points="200,140 200,60 320,190" fill="#10b981" fill-opacity="0.1" />
+  
+  <!-- Triangle Outline -->
+  <polygon points="200,60 320,190 80,190" fill="none" stroke="#0f172a" stroke-width="2" />
+  
+  <!-- Lines from P to vertices -->
+  <line x1="200" y1="140" x2="200" y2="60" stroke="#0f172a" stroke-width="1" stroke-dasharray="2 2" />
+  <line x1="200" y1="140" x2="320" y2="190" stroke="#0f172a" stroke-width="1" stroke-dasharray="2 2" />
+  <line x1="200" y1="140" x2="80" y2="190" stroke="#0f172a" stroke-width="1" stroke-dasharray="2 2" />
+  
+  <!-- Vertices -->
+  <circle cx="200" cy="60" r="5" fill="#0f172a" />
+  <text x="200" y="45" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#0f172a">A (u)</text>
+  
+  <circle cx="320" cy="190" r="5" fill="#0f172a" />
+  <text x="335" y="195" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#0f172a">C (w)</text>
+  
+  <circle cx="80" cy="190" r="5" fill="#0f172a" />
+  <text x="65" y="195" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#0f172a">B (v)</text>
+  
+  <!-- Point P -->
+  <circle cx="200" cy="140" r="6" fill="#f97316" stroke="#ffffff" stroke-width="2" />
+  <text x="185" y="140" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="end" fill="#f97316">P</text>
+  
+  <!-- Labels for Areas -->
+  <text x="200" y="175" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle" fill="#ef4444">Area PBC (u비중)</text>
+  <text x="135" y="115" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle" fill="#3b82f6">Area PCA (v비중)</text>
+  <text x="265" y="115" font-family="system-ui, sans-serif" font-size="11" text-anchor="middle" fill="#10b981">Area PAB (w비중)</text>
+  
+  <!-- Math Formula Helper -->
+  <text x="20" y="225" font-family="system-ui, sans-serif" font-size="10.5" fill="#64748b">P = u*A + v*B + w*C  (단, u + v + w = 1)</text>
+</svg>

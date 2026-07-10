@@ -1,0 +1,16 @@
+# Build and validation scripts
+generate_viewer.js
+validate_js_snippets.js
+
+# Intermediate / redundant generated pages
+svg_viewer.html
+
+# Heavy PDF files
+수학물리핸드북_v6.pdf
+수학물리핸드북_v7.pdf
+수학물리핸드북_v8.pdf
+# *.pdf
+
+# OS metadata
+.DS_Store
+Thumbs.db

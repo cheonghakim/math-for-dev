@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 220" width="440" height="220" style="background-color: #ffffff;">
+  <!-- Background -->
+  <rect width="440" height="220" fill="#ffffff" />
+  
+  <!-- Title -->
+  <text x="20" y="25" font-family="system-ui, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">법선 행렬 (Normal Matrix)의 필요성</text>
+  
+  <!-- Left Side: Uniform Scale (Circle) -->
+  <g transform="translate(100, 110)">
+    <!-- Surface (Circle segment) -->
+    <path d="M -50,0 A 50,50 0 0,1 50,0" fill="none" stroke="#64748b" stroke-width="2" />
+    <line x1="-60" y1="0" x2="60" y2="0" stroke="#cbd5e1" stroke-dasharray="3 3" />
+    <!-- Tangent line at (35, 35) approx angle 45 -->
+    <line x1="10" y1="60" x2="60" y2="10" stroke="#10b981" stroke-width="1.5" />
+    <text x="55" y="10" font-family="system-ui, sans-serif" font-size="10" fill="#10b981">접선 (T)</text>
+    <!-- Normal vector at (35, 35) pointing outward at 45 -->
+    <line x1="35.3" y1="35.3" x2="70.7" y2="70.7" stroke="#3b82f6" stroke-width="2" />
+    <!-- Arrow head -->
+    <polygon points="67,71 73,73 71,67" fill="#3b82f6" />
+    <text x="80" y="80" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#3b82f6">법선 (N)</text>
+    <circle cx="35.3" cy="35.3" r="3" fill="#0f172a" />
+    <text x="0" y="-15" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#0f172a">1. 일반 변환 (수직 유지)</text>
+  </g>
+  
+  <!-- Right Side: Non-uniform Scale (Ellipse) -->
+  <g transform="translate(300, 110)">
+    <!-- Surface (Ellipse segment, scaled X by 1.8x, Y by 1x) -->
+    <!-- Path representing scaled arc -->
+    <path d="M -90,0 A 90,50 0 0,1 90,0" fill="none" stroke="#64748b" stroke-width="2" />
+    <line x1="-100" y1="0" x2="100" y2="0" stroke="#cbd5e1" stroke-dasharray="3 3" />
+    
+    <!-- Scale stretch transforms (35.3, 35.3) to (63.5, 35.3) -->
+    <circle cx="63.5" cy="35.3" r="3" fill="#0f172a" />
+    
+    <!-- Incorrect Normal (Stretched directly by Model-View) -->
+    <!-- Stretched (70.7, 70.7) -> (127, 70.7) -> direction vector is (63.5, 35.4) which tilts too much horizontally -->
+    <line x1="63.5" y1="35.3" x2="110" y2="61" stroke="#ef4444" stroke-width="2" stroke-dasharray="3 3" />
+    <polygon points="107,62 113,62 110,58" fill="#ef4444" />
+    <text x="115" y="75" font-family="system-ui, sans-serif" font-size="10" fill="#ef4444">왜곡된 법선 (수직 X)</text>
+    
+    <!-- Correct Normal (Transformed by Inverse Transpose) -->
+    <!-- For ellipse x²/a² + y²/b² = 1, normal vector at (x, y) is proportional to (x/a², y/b²) -->
+    <!-- (63.5/1.8², 35.3/1²) = (19.6, 35.3) -> normalized direction approx (0.48, 0.87) -->
+    <line x1="63.5" y1="35.3" x2="87.5" y2="78.8" stroke="#3b82f6" stroke-width="2" />
+    <polygon points="84,79 90,80 88,75" fill="#3b82f6" />
+    <text x="75" y="95" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#3b82f6">올바른 법선 (수직)</text>
+    
+    <text x="0" y="-15" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#0f172a">2. 비균등 스케일 (가로 늘림)</text>
+  </g>
+</svg>
