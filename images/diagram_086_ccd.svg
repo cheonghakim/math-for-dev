@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 260">
+  <rect width="850" height="260" rx="16" fill="#f8fafc"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#ef4444"/></marker></defs>
+  <text x="425" y="28" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#0f172a">Tunneling과 연속 충돌 검출</text>
+  <g font-family="sans-serif" text-anchor="middle"><text x="210" y="60" font-size="14" fill="#ef4444">이산 검사: 벽을 건너뜀</text><text x="635" y="60" font-size="14" fill="#16a34a">CCD: 이동 구간에서 TOI 탐색</text></g>
+  <g><rect x="205" y="80" width="18" height="125" fill="#334155"/><circle cx="85" cy="145" r="18" fill="#60a5fa"/><circle cx="345" cy="145" r="18" fill="#60a5fa"/><path d="M110 145H320" stroke="#ef4444" stroke-width="4" stroke-dasharray="9 7" marker-end="url(#a)"/></g>
+  <g><rect x="635" y="80" width="18" height="125" fill="#334155"/><circle cx="510" cy="145" r="18" fill="#60a5fa"/><circle cx="617" cy="145" r="18" fill="#f59e0b"/><path d="M535 145H610" stroke="#16a34a" stroke-width="4"/><text x="617" y="228" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#475569">time of impact</text></g>
+</svg>

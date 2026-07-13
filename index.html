@@ -468,7 +468,22 @@
 
 이 문장 하나가 그래픽스와 물리엔진의 큰 뼈대입니다.
 
-## 0.1 실무 수학·물리 용어 대조표 (Glossary)
+## 0.1 독자별 추천 학습 경로
+
+이 책은 모든 절을 한 번에 읽는 교과서라기보다, 공통 기초에서 출발해 목적에 맞는 길을 고르는 핸드북입니다. 처음 읽을 때는 아래 순서를 권장합니다.
+
+\`\`\`txt
+공통 기초       1~22
+그래픽스 입문   1~19 → 28~30 → 72~75 → 80~91
+물리엔진 입문   1~27 → 50~71 → 92~98 → 105
+게임플레이      1~13 → 20~24 → 31~35 → 78~79 → 99~105
+\`\`\`
+
+![독자별 추천 학습 경로](./images/diagram_088_learning_paths.svg)
+
+각 심화 절은 앞 절의 용어를 사용합니다. 모르는 함수나 기호가 나오면 해당 절을 억지로 끝내기보다 위 경로의 앞 단계로 돌아가 확인하세요. \`GJK/EPA\`, PBR처럼 이름만 소개하는 항목은 **다음 학습 주제**이며 이 책에서 완전 구현까지 요구하지 않습니다.
+
+## 0.2 실무 수학·물리 용어 대조표 (Glossary)
 
 이 책을 보기 전에 수학, 물리, 그리고 실제 개발 코드에서 사용하는 용어들이 매치되지 않아 헷갈리는 경우가 많습니다. 아래 대조표를 참고하면 개념이 더욱 뚜렷해집니다.
 
@@ -634,13 +649,13 @@ if (distance(player, enemy) < 100) {
 velocity = 방향 + 속력
 \`\`\`
 
-정규화는 벡터의 길이를 1로 만들어서 **방향만 남기는 것**입니다.
+정규화는 벡터의 길이를 1로 만들어서 **방향만 남기는 것**입니다. 이렇게 길이가 1이 된 벡터를 **단위 벡터(Unit Vector)**라고 부릅니다.
 
 \`\`\`js
-function normalize(v) {
+function normalize(v, epsilon = 1e-8) {
   const len = Math.sqrt(v.x * v.x + v.y * v.y);
 
-  if (len === 0) {
+  if (len < epsilon) {
     return { x: 0, y: 0 };
   }
 
@@ -651,6 +666,8 @@ function normalize(v) {
 }
 \`\`\`
 
+\`(0, 0)\`에는 방향이 없으므로 정규화할 수 없습니다. 위 함수는 계산을 안전하게 계속하기 위해 영벡터를 반환하지만, 이 결과는 길이가 1인 단위 벡터가 아닙니다. 조준이나 충돌처럼 방향이 반드시 필요한 코드에서는 영벡터가 나온 원인을 별도로 처리해야 합니다.
+
 예:
 
 \`\`\`js
@@ -658,7 +675,24 @@ normalize({ x: 10, y: 0 }); // { x: 1, y: 0 }
 normalize({ x: 0, y: 5 });  // { x: 0, y: 1 }
 \`\`\`
 
-> **기억 문장:** 정규화는 “화살표 길이를 1로 맞추는 것”이다.
+> **기억 문장:** 정규화는 “화살표 길이를 1로 맞추는(단위 벡터로 만드는) 것”이다.
+
+### 4.0 실무에서 정규화를 쓰는 구체적인 상황들
+
+개발할 때 "언제 정규화를 해야 하지?" 헷갈린다면 아래의 4가지 대표적인 사례를 기억하세요.
+
+1. **방향 벡터에 일정한 속력/힘을 곱해 새로운 물리량을 만들 때**
+   - **예시**: 캐릭터가 걷는 속도, 총알이 날아가는 속도, 넉백 힘 적용 등.
+   - **이유**: 도착점까지의 거리에 상관없이 매 프레임 일정한 속도로 이동시키려면, 크기가 1인 순수한 '방향' 벡터에 원하는 '속력(Speed)'을 곱해주어야 합니다.
+2. **두 벡터 사이의 순수한 각도 차이를 비교할 때 (내적 연산 전)**
+   - **예시**: 적이 내 시야각($45^\\circ$) 내에 있는지 판단하기, 조명 계산 등.
+   - **이유**: 내적 공식 $A \\cdot B = |A||B|\\cos\\theta$에서 두 벡터의 길이($|A|, |B|$)를 1로 만들어야 내적 결과가 온전히 코사인 값($\\cos\\theta$)이 되므로 각도 비교가 쉬워집니다.
+3. **3D 그래픽스에서 셰이딩(조명) 연산을 수행할 때**
+   - **예시**: 표면이 빛을 받는 양을 결정하는 램버트 디퓨즈(Lambertian Diffuse) 계산.
+   - **이유**: 표면 수직 벡터($N$)와 빛의 방향 벡터($L$)가 각각 정규화되어 있어야 빛의 세기가 왜곡 없이 $0.0 \\sim 1.0$ 사이의 올바른 밝기로 계산됩니다.
+4. **투영(Projection)이나 반사(Reflection)를 연산할 때**
+   - **예시**: 빗면에 미끄러지는 힘 구하기, 벽이나 바닥에 튕기는 물리 반응.
+   - **이유**: 반사 공식 $R = V - 2(V \\cdot N)N$ 등에서 기준이 되는 법선 벡터 $N$이 반드시 크기 1인 단위 벡터여야 공식의 배율 왜곡 없이 정확한 튕김 벡터가 도출됩니다.
 
 ## 4.1 캐릭터가 마우스 방향으로 일정한 속도로 이동하기
 
@@ -736,6 +770,11 @@ function dot(a, b) {
 
 ## 5.2 적이 내 앞에 있는지 판단하기
 
+> **[참고] 각도(rotation)에서 방향 벡터(x, y)를 만드는 이유:**
+> 삼각함수에서 캐릭터의 회전각이 $\\theta$일 때, 반지름이 1인 원(단위원) 상의 좌표는 항상 $(x: \\cos\\theta, y: \\sin\\theta)$가 됩니다. 즉, 코사인($\\cos$)은 가로 방향 크기, 사인($\\sin$)은 세로 방향 크기를 의미하므로 이 둘을 조립하면 그 각도가 가리키는 방향의 크기 1짜리 화살표(단위 방향 벡터)를 얻을 수 있습니다. (자세한 삼각함수와 원 좌표의 원리는 뒤쪽 **8. 삼각함수는 원 위의 좌표다**에서 다시 다룹니다.)
+
+![적이 내 앞에 있는지 판단하는 상황](./images/diagram_012_5.svg)
+
 \`\`\`js
 // [JavaScript - CPU 인공지능 시야 연산]
 
@@ -761,10 +800,10 @@ if (facing > 0) {
 }
 \`\`\`
 
-더 좁은 시야각(예: 전방 $45^\\circ$ 부채꼴 범위)을 만들고 싶으면 기준값을 높여주면 됩니다. 코사인 $45^\\circ$값은 약 \`0.707\`입니다.
+더 좁은 시야를 만들고 싶으면 기준값을 높여주면 됩니다. 이때 코드에서 비교하는 각도는 **정면에서 한쪽 가장자리까지의 반각(half-angle)**입니다. 예를 들어 정면 기준 좌우 각각 $45^\\circ$, 즉 전체 폭 $90^\\circ$인 부채꼴은 $\\cos 45^\\circ \\approx 0.707$을 사용합니다.
 
 \`\`\`js
-// 전방 45도 내에 적이 들어왔는가?
+// 정면에서 좌우 각각 45도(전체 시야각 90도) 안에 들어왔는가?
 if (facing > 0.707) {
   console.log("시야 범위 내에 있음");
 }
@@ -787,12 +826,45 @@ dot(a, b) = cosθ
 그래서 두 벡터가 정규화된 상태에서 각도가 필요하면:
 
 \`\`\`js
-const angle = Math.acos(dot(a, b));
+const cosine = Math.max(-1, Math.min(1, dot(a, b)));
+const angle = Math.acos(cosine);
 \`\`\`
+
+수학적으로 정규화된 두 벡터의 내적은 \`-1..1\`이지만, 컴퓨터의 반올림 오차로 \`1.00000001\` 같은 값이 생길 수 있습니다. \`acos\`에 범위 밖 값을 넣으면 \`NaN\`이 되므로 먼저 clamp합니다.
 
 하지만 실전에서는 각도 자체보다 \`dot > 0.7\`처럼 비교만 하는 경우가 많습니다. \`acos\`는 상대적으로 계산 비용이 비싸므로, 굳이 각도로 바꾸지 않고 코사인 값 자체로 비교하는 것이 성능상 유리합니다.
 
 > **실무 팁 (그래픽스 조명):** 3D 그래픽스의 가장 기초적인 조명 모델(Lambertian Diffuse)은 표면의 법선 벡터(Normal)와 빛을 향하는 벡터(Light)의 내적값(\`dot(N, L)\`)을 밝기로 사용합니다. 이때 두 벡터가 정규화되어 있지 않으면 조명이 비정상적으로 어둡거나 밝아지므로 내적 전 반드시 정규화를 해야 합니다.
+
+## 5.4 3D 내적: 차원만 늘어날 뿐 의미는 같다
+
+내적의 좋은 점은 **차원이 늘어나도 규칙이 그대로**라는 것입니다. 각 축의 성분끼리 곱해서 전부 더하면 됩니다. 외적이 2D와 3D에서 결과의 타입 자체가 달라졌던 것(스칼라 vs 벡터)과 대조적입니다.
+
+\`\`\`txt
+2D: dot = ax*bx + ay*by
+3D: dot = ax*bx + ay*by + az*bz
+\`\`\`
+
+\`\`\`js
+// [JavaScript/GLSL 공통 - 3D 내적 연산]
+function dot3D(a, b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function length3D(v) {
+  return Math.sqrt(dot3D(v, v)); // 자기 자신과의 내적 = 길이의 제곱
+}
+
+function normalize3D(v) {
+  const len = length3D(v);
+  if (len === 0) return { x: 0, y: 0, z: 0 };
+  return { x: v.x / len, y: v.y / len, z: v.z / len };
+}
+\`\`\`
+
+$a \\cdot b = |a||b|\\cos\\theta$라는 의미도, 정규화하면 결과가 곧 $\\cos\\theta$가 된다는 것도, 부호로 앞/뒤를 판정하는 것도 3D에서 똑같이 성립합니다. 앞의 조명 계산 \`dot(N, L)\`이 바로 이 3D 내적입니다.
+
+> **기억 문장:** 내적은 차원이 늘어나도 "성분끼리 곱해서 전부 더한다"가 전부다. \`dot(v, v)\`는 길이의 제곱이다.
 
 ---
 
@@ -915,6 +987,8 @@ cross = 0   같은 선 위 (일직선)
 
 ## 7.1 적이 내 왼쪽에 있는지 오른쪽에 있는지
 
+![적이 내 왼쪽에 있는지 오른쪽에 있는지 판단하는 상황](./images/diagram_013.svg)
+
 \`\`\`js
 // [JavaScript - CPU 캐릭터 회전 제어]
 
@@ -931,6 +1005,8 @@ const toEnemy = normalize({
 });
 
 // 3. 2D 외적을 통해 적이 좌/우 중 어느 쪽에 위치하는지 횡방향 판정
+// 주의: 아래 좌/우 해석은 수학 좌표계(y-up) 기준이다.
+// Canvas 같은 y-down 화면 좌표계에서는 좌/우가 그대로 뒤바뀐다.
 const side = cross2D(forward, toEnemy);
 
 if (side > 0) {
@@ -976,15 +1052,21 @@ function cross3D(a, b) {
 
 1. 삼각형 세 꼭짓점 $A, B, C$의 두 변 벡터인 $\\vec{E_1} = B - A$와 $\\vec{E_2} = C - A$를 만듭니다.
 2. 두 변을 외적하여 표면 법선 벡터 $\\vec{N} = \\vec{E_1} \\times \\vec{E_2}$를 구합니다.
-3. 카메라의 시선 방향 벡터 $\\vec{V}$와 법선 벡터 $\\vec{N}$의 내적을 구합니다.
-   * \`dot(N, V) > 0\` 이면 면이 카메라 반대쪽을 보고 있으므로 **그리지 않음 (Cull)**.
-   * \`dot(N, V) <= 0\` 이면 면이 카메라를 향해 있으므로 **그림**.
+3. 여기서는 $\\vec{V}$를 **카메라에서 면으로 향하는 방향**이라고 정의하고, 법선 $\\vec{N}$과 내적합니다.
+   * 이 규약에서는 \`dot(N, V) > 0\`이면 면이 카메라 반대쪽을 보므로 **그리지 않음(Cull)**입니다.
+   * \`dot(N, V) <= 0\`이면 면이 카메라를 향하므로 **그립니다**.
+
+> 법선의 방향은 정점 나열 순서(winding)에 따라 달라지고, $V$를 \`면 → 카메라\`로 정의하면 위 부호도 반대로 바뀝니다. 실제 렌더링 API의 앞면 규약(CW/CCW)과 컬링 설정을 함께 확인해야 합니다.
+
+![백페이스 컬링 원리](./images/diagram_07_2_a.svg)
 
 ### B. TBN 행렬 구성 (노멀 맵 매핑)
-3D 그래픽스에서 울퉁불퉁한 표면 질감을 가짜로 표현하는 노멀 맵(Normal Map)을 계산하기 위해 **접접 공간(Tangent Space)**이 필요합니다.
+3D 그래픽스에서 울퉁불퉁한 표면 질감을 가짜로 표현하는 노멀 맵(Normal Map)을 계산하기 위해 **접선 공간(Tangent Space)**이 필요합니다.
 * 이때 표면의 가로축인 **접선(Tangent, $\\vec{T}$)** 벡터와 표면의 **법선(Normal, $\\vec{N}$)** 벡터를 외적하여, 세 번째 축인 **종법선(Bitangent, $\\vec{B}$)** 벡터를 만듭니다.
   $$\\vec{B} = \\vec{N} \\times \\vec{T}$$
 * 이 세 축을 조립하여 셰이더 내부에서 3D 벡터 좌표계를 변환하는 $3 \\times 3$ **TBN 행렬**을 만듭니다.
+
+![TBN 좌표계와 종법선 계산](./images/diagram_07_2_b.svg)
 
 ---
 
@@ -1144,17 +1226,19 @@ const dir = {
 
 ## 11. 방향 벡터에서 각도 구하기: atan2
 
-방향 벡터에서 라디안 각도를 구할 때는 반드시 \`Math.atan2\` 함수를 사용해야 합니다.
+위치 벡터나 변위 벡터 \`(x, y)\`가 주어졌을 때, 이 벡터가 가리키는 방향이 **x축 양의 기준선(0°)으로부터 몇 라디안 회전했는지(각도 $\\theta$)**를 구하려면 반드시 \`Math.atan2\` 함수를 사용해야 합니다.
 
 \`\`\`js
 const angle = Math.atan2(dir.y, dir.x);
 \`\`\`
 
-이 함수는 인자의 순서가 **y가 먼저, x가 나중**인 점에 특히 주의해야 합니다.
+이 함수는 탄젠트의 역함수($\\tan^{-1}$)를 계산하는 함수로, 인자의 순서가 **y가 먼저, x가 나중**인 점에 특히 주의해야 합니다.
 
 \`\`\`txt
 atan2(y, x)
 \`\`\`
+
+이것이 단순 벡터 연산(\`toMouse = mouse - player\`)과 다른 점은, 벡터 연산의 결과는 또 다른 **방향과 크기(화살표)**인 반면, \`atan2\` 연산의 결과는 **기준선 대비 돌아간 정도를 나타내는 '단일 숫자 값(각도/라디안 스칼라)'**을 반환한다는 것입니다.
 
 ### 11.1 왜 \`atan\` 대신 \`atan2\`를 쓰는가? (실무 면접 단골 질문)
 단순 아크탄젠트 함수인 \`Math.atan(y / x)\`를 쓰지 않고 \`Math.atan2(y, x)\`를 써야 하는 이유는 두 가지 결정적인 한계 때문입니다.
@@ -1164,8 +1248,8 @@ atan2(y, x)
    * 예를 들어, 방향이 우상향 \`(x: 1, y: 1)\` 일 때 비율은 \`1 / 1 = 1\`이며 각도는 $45^\\circ$입니다. 그런데 좌하향 \`(x: -1, y: -1)\` 일 때도 비율은 \`-1 / -1 = 1\`이므로 동일하게 $45^\\circ$가 반환되어 정반대 방향을 구분하지 못합니다.
    * 반면 \`Math.atan2(y, x)\`는 $y$와 $x$의 부호를 각각 개별 분석하여 $[-\\pi, \\pi]$ (즉, $-180^\\circ$에서 $+180^\\circ$까지의 전방위 $360^\\circ$ 영역)의 올바른 사분면 각도를 찾아줍니다.
 2. **분모가 0인 오류 (Division by Zero):**
-   * 위쪽이나 아래쪽 수직 방향 \`(x: 0, y: 1)\` 일 때, \`Math.atan(y / x)\`는 \`1 / 0\`이 되어 0으로 나누기 오류가 발생하거나 값이 무한대(\`Infinity\`)가 되어 크래시가 납니다.
-   * \`Math.atan2(1, 0)\`은 내부적으로 예외 처리가 되어 있어 $90^\\circ$ ($\\pi/2$)의 정확한 값을 안전하게 반환합니다.
+   * 위쪽이나 아래쪽 수직 방향 \`(x: 0, y: 1)\`에서는 \`y / x\`가 무한대가 됩니다. JavaScript는 이 경우 크래시하지 않고 \`Infinity\`를 만들며 \`Math.atan(Infinity)\`도 $\\pi/2$를 반환하지만, \`(0, 0)\`에서는 \`0 / 0\`이 \`NaN\`이 됩니다. 다른 언어에서는 0 나눗셈이 예외가 될 수도 있습니다.
+   * \`Math.atan2(y, x)\`는 나눗셈 없이 두 성분을 함께 처리하므로 사분면을 보존하고 수직 방향도 안전하게 계산합니다. 단, \`(0, 0)\`은 방향 자체가 정의되지 않으므로 애플리케이션에서 별도로 처리해야 합니다.
 
 ## 11.2 마우스를 바라보는 캐릭터
 
@@ -1196,10 +1280,35 @@ player.rotation = angle;
 
 ## 12. 2D 회전 공식
 
-점 \`(x, y)\`를 \`θ\`만큼 회전시키면:
+점 $P(x, y)$를 원점 기준으로 $\\theta$만큼 회전시킨 새로운 점 $P'(x', y')$의 좌표를 구하는 공식입니다.
 
-![x' = x cosθ - y sinθ](./images/diagram_019.svg)
+![2D 회전 공식의 원리](./images/diagram_019_rotation_derivation.svg)
 
+### 12.0 회전 공식 유도 과정 (극좌표계와 삼각함수 덧셈정리)
+
+이 공식이 어떻게 유도되었는지 이해하면 굳이 외우지 않아도 기억에 오래 남습니다.
+
+1. **원래 점 $P(x, y)$를 극좌표(Polar Coordinates)로 표현하기:**
+   원점과 점 $P$ 사이의 거리를 $r$, $x$축 기준선과 선분 $OP$가 이루는 각도를 $\\alpha$라고 하면, 삼각함수의 정의에 의해 다음과 같이 쓸 수 있습니다.
+   $$x = r \\cos\\alpha$$
+   $$y = r \\sin\\alpha$$
+
+2. **$\\theta$만큼 회전한 점 $P'(x', y')$ 표현하기:**
+   점 $P$를 원점 기준으로 $\\theta$만큼 회전하면 거리는 그대로 $r$이지만, 각도는 $\\alpha + \\theta$가 됩니다.
+   $$x' = r \\cos(\\alpha + \\theta)$$
+   $$y' = r \\sin(\\alpha + \\theta)$$
+
+3. **삼각함수의 덧셈정리(Addition Formulas) 대입하기:**
+   고등학교 수학에서 배우는 코사인과 사인의 합 공식인 $\\cos(A+B) = \\cos A\\cos B - \\sin A\\sin B$, $\\sin(A+B) = \\sin A\\cos B + \\cos A\\sin B$를 각각 대입해 전개합니다.
+   $$x' = r (\\cos\\alpha \\cos\\theta - \\sin\\alpha \\sin\\theta)$$
+   $$y' = r (\\sin\\alpha \\cos\\theta + \\cos\\alpha \\sin\\theta)$$
+
+4. **원래 좌표($x, y$) 다시 대입하기:**
+   $r\\cos\\alpha$ 자리에 $x$를, $r\\sin\\alpha$ 자리에 $y$를 대입합니다.
+   $$x' = (r\\cos\\alpha)\\cos\\theta - (r\\sin\\alpha)\\sin\\theta = x\\cos\\theta - y\\sin\\theta$$
+   $$y' = (r\\sin\\alpha)\\cos\\theta + (r\\cos\\alpha)\\sin\\theta = y\\cos\\theta + x\\sin\\theta = x\\sin\\theta + y\\cos\\theta$$
+
+이렇게 해서 그래픽스와 게임 엔진에서 핵심적으로 쓰이는 **2차원 회전 행렬 공식**이 탄생하게 됩니다.
 
 코드:
 
@@ -1257,6 +1366,10 @@ p' = rotatedX * x + rotatedY * y
 
 ## 13. 90도 회전은 특별히 쉽다
 
+일반적인 임의 각도 회전보다 90도 회전(직각 회전)은 훨씬 간단하게 해결할 수 있습니다. 곱셈이나 삼각함수 연산 없이, 단순히 x와 y의 성분을 맞바꾸고 부호만 하나 바꿔주면 끝납니다.
+
+![수학 좌표계와 화면 좌표계의 회전 방향 비교](./images/diagram_13_coordinate_compare.svg)
+
 아래 코드 공식은 **수학 좌표계(y-up)** 기준입니다.
 
 반시계 방향 90도 회전 (CCW):
@@ -1277,11 +1390,11 @@ function rotate90CW(v) {
 
 > [!WARNING]
 > **화면 좌표계(y-down)에서의 반전:**
-> 화면 좌표계에서는 y축이 거꾸로 되어 있어 CCW와 CW의 연산이 반대로 됩니다.
-> * 화면 좌표계(y-down)에서 **시계 방향 90도 회전(CW)**: \`{ x: -v.y, y: v.x }\`
-> * 화면 좌표계(y-down)에서 **반시계 방향 90도 회전(CCW)**: \`{ x: v.y, y: -v.x }\`
+> 화면 좌표계(HTML5 Canvas, 브라우저 DOM 등)에서는 y축이 아래로 갈수록 커지는 구조이기 때문에, 기하학적 회전 방향이 수학 좌표계와 반대로 적용됩니다.
+> * 화면 좌표계(y-down)에서 **시계 방향 90도 회전(CW)**: \`{ x: -v.y, y: v.x }\` (수학의 CCW 공식과 같음)
+> * 화면 좌표계(y-down)에서 **반시계 방향 90도 회전(CCW)**: \`{ x: v.y, y: -v.x }\` (수학의 CW 공식과 같음)
 > 
-> 예를 들어, 화면 좌표계에서 앞 방향 \`forward = { x: 1, y: 0 }\`에서 오른쪽 방향(시계방향 90도) \`right = { x: 0, y: 1 }\`을 구하려면 \`rotate90CCW\`의 로직인 \`{ x: -v.y, y: v.x }\`를 사용해야 합니다.
+> 예를 들어, 화면 좌표계에서 캐릭터의 현재 앞 방향이 \`forward = { x: 1, y: 0 }\` (오른쪽)일 때, 캐릭터 기준 오른쪽 방향(즉, 화면상에서 시계방향 90도 회전한 아래쪽)인 \`right = { x: 0, y: 1 }\`을 구하려면 수학의 \`rotate90CCW\` 공식인 \`{ x: -v.y, y: v.x }\`를 사용해야 합니다.
 
 ---
 
@@ -1452,7 +1565,7 @@ const rotatedPoint = rotateAround(point, objectCenter, angle);
 position = (x, y, 1)
 \`\`\`
 
-이 시스템을 **동차좌표 (Homogeneous Coordinates)**라고 부릅니다. 동차좌표계를 도입하면 2D 상의 위치 이동이 3차원 투영 공간에서의 '밀어밀기(Shear)' 변환으로 해석되어 곱셈 연산으로 처리가 가능해집니다.
+이 시스템을 **동차좌표 (Homogeneous Coordinates)**라고 부릅니다. 동차좌표계를 도입하면 2D 상의 위치 이동이 3차원 공간에서의 **전단(밀림, Shear)** 변환으로 해석되어 곱셈 연산으로 처리가 가능해집니다.
 
 ### 17.1 동차좌표에서 w 성분의 역할 ($w=0$ vs. $w=1$)
 그래픽스 연산 시 정점의 속성에 따라 $w$ 값을 제어하여 변환 행렬 연산 결과를 제어합니다.
@@ -1479,6 +1592,48 @@ position = (x, y, 1)
 
 ![S = [ sx 0 0 ]](./images/diagram_029.svg)
 
+
+## 17.2 3D로의 확장: 4x4 행렬과 아핀 공간
+
+지금까지 본 2D의 $3 \\times 3$ 동차좌표를 3D로 올리면, 그래픽스에서 가장 많이 보게 되는 **$4 \\times 4$ 행렬(\`mat4\`)**이 됩니다. 원리는 완전히 같습니다. 3D 좌표 $(x, y, z)$ 뒤에 $w$를 붙여 $(x, y, z, w)$로 만들면, 이동까지 곱셈 하나로 처리할 수 있습니다.
+
+$$T = \\begin{bmatrix} 1 & 0 & 0 & t_x \\\\ 0 & 1 & 0 & t_y \\\\ 0 & 0 & 1 & t_z \\\\ 0 & 0 & 0 & 1 \\end{bmatrix}, \\qquad S = \\begin{bmatrix} s_x & 0 & 0 & 0 \\\\ 0 & s_y & 0 & 0 \\\\ 0 & 0 & s_z & 0 \\\\ 0 & 0 & 0 & 1 \\end{bmatrix}$$
+
+$w$의 역할도 2D와 똑같습니다. 이 규칙은 3D 셰이더를 짤 때 **매일 만나는 실전 규칙**입니다.
+
+\`\`\`txt
+점(위치)   → (x, y, z, 1)  이동이 적용된다
+방향(벡터) → (x, y, z, 0)  이동이 무시된다
+\`\`\`
+
+그래서 GLSL에서 정점 위치는 \`vec4(position, 1.0)\`으로, 법선이나 빛의 방향은 \`vec4(normal, 0.0)\`으로 확장합니다. 법선에 실수로 \`1.0\`을 넣으면 카메라가 움직일 때마다 조명이 이상하게 흔들리는데, 법선이 이동 성분까지 먹어버리기 때문입니다.
+
+### 아핀 변환(Affine Transformation)이란 무엇인가
+
+$4 \\times 4$ 행렬 중에서도 **마지막 행이 $(0, 0, 0, 1)$인 것**들을 **아핀 변환**이라고 부릅니다. 이동, 회전, 스케일, 전단이 전부 여기에 속합니다.
+
+$$M_{affine} = \\begin{bmatrix} & A & & \\vec{t} \\\\ 0 & 0 & 0 & 1 \\end{bmatrix} \\qquad (A = 3 \\times 3\\ \\text{선형 부분},\\quad \\vec{t} = \\text{이동})$$
+
+아핀 변환의 성질을 감각적으로 잡으면 이렇습니다.
+
+\`\`\`txt
+직선은 변환 후에도 직선이다.
+평행한 두 선은 변환 후에도 평행하다.
+선분의 중점은 변환 후에도 중점이다.
+\`\`\`
+
+즉 **모양이 기울고 늘어날 수는 있어도, 원근감처럼 "멀리 있는 게 작아지는" 왜곡은 일어나지 않습니다.** 마지막 행이 $(0,0,0,1)$이라 어떤 점을 넣어도 결과의 $w$가 항상 1로 유지되고, 따라서 74번에서 배울 **원근 분할이 일어나지 않기 때문**입니다.
+
+여기서 중요한 대비가 나옵니다.
+
+\`\`\`txt
+Model / View 행렬  → 아핀 변환이다 (w = 1 유지, 원근 없음)
+Projection 행렬    → 아핀 변환이 아니다 (마지막 행이 (0,0,-1,0) 등, w에 z를 넣음)
+\`\`\`
+
+투영 행렬만 유일하게 마지막 행을 부숴서 $w$에 깊이값 $z$를 집어넣습니다. 바로 그 덕분에 나중에 $w$로 나누는 **원근 분할**이 가능해지고, 멀리 있는 물체가 작아집니다. "투영 행렬은 물체를 옮기는 행렬이 아니라 렌즈"라는 74번의 말이 수학적으로는 **"투영 행렬만 아핀 변환이 아니다"**라는 뜻입니다.
+
+> **기억 문장:** 아핀 변환은 $w$를 1로 지켜주는 변환이다. 투영 행렬만 그 약속을 깨고, 그래서 원근감이 생긴다.
 
 ---
 
@@ -1535,6 +1690,8 @@ worldPosition = T * R * S * localPosition
 ## 19. 3x3 행렬 코드
 
 여기서는 \`p' = M * p\` 방식으로 생각합니다.
+
+> **이 절의 규약:** 점은 열벡터이고, 아래 JavaScript 배열은 사람이 읽기 쉽게 **행 우선(row-major)** 순서로 저장합니다. WebGL에 행렬을 전달할 때 사용하는 열 우선 메모리 배치와는 별개의 문제이므로, 라이브러리의 저장 규약과 곱셈 방향을 반드시 확인해야 합니다.
 
 \`\`\`js
 function mat3Translation(tx, ty) {
@@ -1650,6 +1807,8 @@ function makeTransform2D(position, rotation, scale) {
 
 ## 20.2 코드로 보는 관계 (수치 적분)
 
+아래는 현재 속도로 위치를 먼저 바꾸는 **명시적 오일러** 순서입니다.
+
 \`\`\`js
 position.x += velocity.x * dt;
 position.y += velocity.y * dt;
@@ -1657,6 +1816,8 @@ position.y += velocity.y * dt;
 velocity.x += acceleration.x * dt;
 velocity.y += acceleration.y * dt;
 \`\`\`
+
+뒤의 중력 및 물리엔진 예제에서는 안정성이 더 나은 **반암시적 오일러**, 즉 \`속도 갱신 → 위치 갱신\` 순서를 사용합니다. 두 방식은 코드 한 줄의 순서만 다르지만 수치적 결과는 같지 않습니다.
 
 즉:
 
@@ -1666,7 +1827,7 @@ velocity.y += acceleration.y * dt;
 ![acceleration](./images/diagram_034.svg)
 
 
-## 20.2 자동차 비유
+## 20.3 자동차 비유
 
 자동차 위치가 \`position\`입니다.
 
@@ -1730,7 +1891,7 @@ position.x += 100 * dt;
 
 수학책에서는 미적분이 복잡하게 느껴지지만, 실무 개발(물리엔진)에서는 다음과 같이 매우 단순하게 이해할 수 있습니다.
 
-* **미분(Differentiation):** 현재 어떤 물리량이 변하는 **'변화율(기록된 속도 등)'**을 구하는 것.
+* **미분(Differentiation):** 어떤 물리량이 지금 이 순간 얼마나 빠르게 변하고 있는지, 그 **'순간 변화율'**을 구하는 것. (위치를 미분하면 속도, 속도를 미분하면 가속도)
 * **적분(Integration):** 시간 조각 $dt$ 동안 일어난 **'작은 변화량'**을 현재 값에 계속 누적하여 최종 상태를 복원하는 것.
 
 물리엔진에서는 다음과 같이 적분을 통해 캐릭터를 이동시키고 중력을 적용합니다.
@@ -1740,7 +1901,7 @@ position.x += 100 * dt;
 속도(v)를 누적(적분)하여 -> 위치(x)를 구한다.
 \`\`\`
 
-## 22.2 수치 적분법(Numerical Integration)의 세 가지 방식
+## 22.1 수치 적분법(Numerical Integration)의 세 가지 방식
 
 컴퓨터는 연속적인 계산을 할 수 없으므로, 매 프레임 $dt$ 간격으로 이 적분을 근사하여 해결합니다. 이를 수치 적분이라고 하며, 실무에서는 주로 다음 세 가지 방식이 쓰입니다.
 
@@ -1774,13 +1935,16 @@ velocity.y += acceleration.y * dt;
 position.x += velocity.x * dt;
 position.y += velocity.y * dt;
 \`\`\`
-* **특징 (업계 표준):** 오일러 적분법 중 **에너지 보존 법칙(Symplectic)**을 가장 잘 만족하는 알고리즘입니다. 스프링이나 공전 궤도가 발산하지 않고 안정된 균형을 이룹니다. 구현이 극도로 단순하면서도 놀라울 만큼 안정적이어서 **Box2D, Unity, Unreal Physics 등 대부분의 상용/오픈소스 물리 엔진의 핵심 통합기(Integrator)로 사용**됩니다.
+* **특징:** 정확한 에너지를 매 순간 보존하는 방법은 아니지만, 명시적 오일러보다 에너지 오차가 장시간 제한되는 경향이 있어 강체 물리에서 널리 쓰입니다. 다만 \`dt\`가 너무 크거나 스프링이 매우 강하면 여전히 불안정할 수 있습니다. 실제 엔진은 반암시적 적분 외에도 반복 제약 풀이, 감쇠, 연속 충돌 검출 등 여러 기법을 함께 사용합니다.
 
 ### C. 베를레 적분 (Verlet Integration)
 속도(Velocity) 변수를 명시적으로 저장하지 않고, **'현재 위치'와 '이전 프레임의 위치'의 차이**를 통해 속도를 암묵적으로 계산하여 이동을 갱신하는 방식입니다.
 
 공식:
 $$x_{new} = 2x_{current} - x_{previous} + a \\cdot dt^2$$
+
+> **왜 속도 변수가 없어도 되나?**
+> 한 스텝 앞($x_{current} + v\\,dt + \\frac12 a\\,dt^2$)과 한 스텝 뒤($x_{previous} = x_{current} - v\\,dt + \\frac12 a\\,dt^2$)의 테일러 전개 두 개를 **더하면 속도항($v\\,dt$)이 부호가 반대라 상쇄**되고 $x_{new} + x_{previous} = 2x_{current} + a\\,dt^2$만 남습니다. 여기서 $x_{new}$에 대해 정리한 것이 위 공식입니다. 즉 속도는 \`현재 위치 - 이전 위치\` 안에 이미 녹아 있어서 따로 저장할 필요가 없습니다.
 
 코드:
 \`\`\`js
@@ -1803,13 +1967,14 @@ function updateVerlet(body, dt) {
   body.ay = 0;
 }
 \`\`\`
+> 이 단순한 위치 베를레 공식은 **고정된 \`dt\`**를 전제로 합니다. 프레임마다 \`dt\`가 크게 달라지면 \`현재 위치 - 이전 위치\`에 저장된 속도의 시간 기준도 달라져 움직임과 에너지가 왜곡됩니다. 실시간 물리에서는 고정 시간 간격을 사용하거나 가변 시간 간격을 보정한 공식을 사용해야 합니다.
+
 * **장점:** 속도 변수가 따로 없기 때문에, 충돌 해결 과정에서 물체의 위치를 강제로 이동시키더라도 속도 불일치 버그가 일어나지 않고 알아서 매끄러운 물리 상태가 보정됩니다.
 * **실무 활용:** **밧줄(Rope), 옷감(Cloth / Fabric) 시뮬레이션, 레그돌(Ragdoll)** 등 서로 얽혀 있는 수많은 제약조건(Constraints)을 빠르게 강제로 조정해야 하는 시스템에 최적의 물리 엔진 방식으로 쓰입니다.
-\`\`\`
 
 이게 아주 단순한 적분입니다.
 
-## 22.1 중력 예제
+## 22.2 중력 예제
 
 \`\`\`js
 // [JavaScript - CPU 물리 시뮬레이션 적분 연산]
@@ -1859,6 +2024,8 @@ function applyForce(body, force) {
   body.acceleration.y += force.y / body.mass;
 }
 \`\`\`
+
+> 이건 개념을 보여주는 가장 단순한 버전입니다. 이대로 쓰면 \`acceleration\`이 프레임마다 계속 쌓이므로, 매 프레임 적분이 끝난 뒤 \`0\`으로 리셋해 주어야 합니다. 실무에서는 아예 가속도가 아니라 **힘을 누적**했다가 마지막에 한 번만 나누는 23.1의 방식을 씁니다.
 
 질량이 크면 같은 힘을 받아도 덜 움직입니다.
 
@@ -1943,7 +2110,7 @@ function applyQuadraticDrag(body, k) {
 
 하늘에서 떨어지는 빗방울이나 낙하 대상을 시뮬레이션할 때, 중력 방향 힘($m \\cdot g$)과 공기 저항력($F_{drag}$)이 평형을 이루어 가속도가 0이 되는 최대 속도 한계점을 **종단 속도**라고 합니다.
 
-물리 법칙 상 무한히 가속되지 않도록 다음과 같이 속도를 제한합니다.
+실제 종단 속도는 중력과 항력을 함께 적분했을 때 두 힘이 평형을 이루며 자연스럽게 나타납니다. 아래 코드는 그 물리를 계산하는 대신, 게임플레이에서 속도가 일정 값을 넘지 않게 만드는 **인위적인 최대 속도 제한(speed cap)**입니다.
 
 코드:
 \`\`\`js
@@ -1963,10 +2130,20 @@ function clampTerminalVelocity(body, maxSpeed) {
 
 대포를 쏘거나 화살을 쏠 때, 고정된 초기 속력 $v_0$로 상대 위치 $(x, y)$에 있는 타겟을 정확히 맞추기 위한 **조준 발사각 $\\theta$**를 계산하는 기법입니다.
 
+![포물선 탄도의 고각과 저각, 속도 성분](./images/diagram_100_ballistic.svg)
+
+> **좌표계 전제:** 아래 공식은 수학 좌표계 \`y-up\`, 아래로 작용하는 중력의 **크기** \`g > 0\`, 수평 상대거리 \`x > 0\`을 가정합니다. Canvas의 \`y-down\` 좌표를 사용한다면 목표의 y차와 중력 부호를 이 규약으로 변환한 뒤 계산해야 합니다.
+
+> **이 공식은 어디서 왔나?**
+> 하늘에서 뚝 떨어진 마법 공식이 아니라, 바로 앞 **20.1의 등가속도 운동 공식**에서 유도됩니다. 발사각이 $\\theta$일 때 초기 속도는 $v_{0x} = v_0\\cos\\theta$, $v_{0y} = v_0\\sin\\theta$로 나뉩니다. 이를 수평·수직 위치 공식에 각각 대입하면 다음 두 식이 나옵니다.
+> $$x = (v_0\\cos\\theta)\\, t, \\qquad y = (v_0\\sin\\theta)\\, t - \\tfrac{1}{2} g t^2$$
+> 첫 식에서 비행 시간 $t = x / (v_0\\cos\\theta)$를 구해 둘째 식에 대입하고, $\\tan\\theta$에 대한 2차 방정식으로 정리해 근의 공식으로 풀면 아래 발사각 공식이 나옵니다. (즉, "시간 $t$를 소거하고 $\\theta$만 남긴" 결과입니다.)
+
 공식:
 $$\\theta = \\arctan\\left(\\frac{v_0^2 \\pm \\sqrt{v_0^4 - g(g x^2 + 2 y v_0^2)}}{gx}\\right)$$
 
 * $g$는 중력 가속도(예: 9.8), $x$와 $y$는 목표물과 나의 상대적 거리 차이입니다.
+* **좌표계 주의:** 이 공식은 **$y$가 위로 증가하는 수학 좌표계**(중력이 $-y$ 방향, $g > 0$)를 전제로 유도했습니다. Canvas처럼 $y$가 아래로 증가하는 화면 좌표계에서 쓰려면 목표의 $y$를 뒤집어(\`targetY = -(mouse.y - player.y)\`) 넣고, 나온 각도도 다시 뒤집어(\`-angle\`) 써야 합니다. 이걸 빠뜨리면 고각과 저각이 서로 바뀌어 포탄이 엉뚱한 곳으로 날아갑니다.
 * $\\pm$ 부호에 따라 포탄의 궤적이 2가지 나옵니다. ($+$는 높게 포물선을 그리며 떨어지는 고각, $-$는 직사 형태로 날아가는 저각)
 * 루트 내부가 음수($<0$)가 되면 주어진 초기 속력 $v_0$로는 사거리가 부족하여 타겟에 닿을 수 없음을 의미합니다.
 
@@ -1998,6 +2175,90 @@ function solveLaunchAngle(targetX, targetY, v0, g) {
 }
 \`\`\`
 
+## 23.5 스프링과 감쇠: 후크의 법칙 (Hooke's Law)
+
+![늘어남과 압축에 따른 스프링 복원력](./images/diagram_101_hooke_spring.svg)
+
+> **실무 맥락 (Mental Hook) - 출렁이는 카메라, 젤리 UI, 밧줄:**
+> 카메라가 플레이어를 딱딱하게 따라가는 대신 살짝 늦게 따라붙었다가 부드럽게 멈추게 하고 싶습니다. 버튼을 누르면 말랑하게 눌렸다가 통통 튀며 제자리로 돌아오게 하고 싶습니다. 이 "제자리로 돌아오려는 성질"을 만드는 것이 **스프링**입니다.
+
+스프링은 아주 단순한 규칙 하나로 동작합니다.
+
+\`\`\`txt
+원래 길이에서 벗어난 만큼, 그 반대 방향으로 당기는 힘이 생긴다.
+\`\`\`
+
+이것이 **후크의 법칙**입니다.
+
+$$\\vec{F}_{spring} = -k \\cdot \\vec{x}$$
+
+* $k$는 **강성 계수(stiffness)**입니다. 크면 뻣뻣한 강철 스프링, 작으면 흐물흐물한 고무줄이 됩니다.
+* $\\vec{x}$는 **평형 위치(원래 있어야 할 자리)로부터 벗어난 변위**입니다.
+* 앞의 마이너스 부호가 핵심입니다. 오른쪽으로 늘어나면 왼쪽으로 당기고, 왼쪽으로 눌리면 오른쪽으로 밀어냅니다. **항상 제자리로 돌아오려는 방향**이라는 뜻입니다.
+
+### 23.5.1 왜 감쇠(Damping)가 반드시 필요한가
+
+후크의 법칙만 적용하면 스프링은 **영원히 진동합니다**. 제자리를 지나칠 때 속도가 최대라서 그대로 반대편으로 넘어가고, 다시 당겨져 되돌아오기를 무한 반복하기 때문입니다.
+
+그래서 실무에서는 **속도에 비례해 반대로 작용하는 감쇠력**을 같이 넣습니다. 23.2의 선형 공기 저항과 정확히 같은 형태입니다.
+
+$$\\vec{F}_{damping} = -c \\cdot \\vec{v}$$
+
+두 힘을 합친 것이 물리엔진에서 말하는 **스프링-댐퍼(Spring-Damper)**입니다.
+
+$$\\vec{F} = -k \\cdot \\vec{x} - c \\cdot \\vec{v}$$
+
+감쇠 계수 $c$의 크기에 따라 움직임의 성격이 완전히 달라집니다.
+
+\`\`\`txt
+c가 너무 작으면: 통통 여러 번 튕기며 천천히 멈춤 (underdamped, 젤리/카툰 느낌)
+c가 적당하면:   한 번 살짝 넘어갔다가 부드럽게 정착 (게임에서 가장 많이 쓰는 느낌)
+c가 너무 크면:  전혀 튕기지 않고 느릿하게 기어감 (overdamped, 끈적한 느낌)
+\`\`\`
+
+코드 (23.1의 힘 누적 방식에 그대로 얹으면 됩니다):
+
+\`\`\`js
+// [JavaScript - CPU 물리 시뮬레이션 힘 연산]
+
+// body를 anchor 지점으로 당기는 스프링 (restLength = 0이면 그 점에 붙으려 함)
+function applySpringForce(body, anchor, restLength, stiffness, damping) {
+  const delta = {
+    x: body.position.x - anchor.x,
+    y: body.position.y - anchor.y
+  };
+
+  const dist = Math.hypot(delta.x, delta.y);
+  if (dist === 0) return; // 방향을 정할 수 없음
+
+  const dir = { x: delta.x / dist, y: delta.y / dist };
+
+  // 1. 후크의 법칙: 평형 길이에서 벗어난 만큼 반대로 당김
+  const displacement = dist - restLength;
+  const springMag = -stiffness * displacement;
+
+  // 2. 감쇠: 늘어나고 줄어드는 속도(법선 방향 속도)에 반대로 작용
+  const velAlongDir = dot(body.velocity, dir);
+  const dampingMag = -damping * velAlongDir;
+
+  const totalMag = springMag + dampingMag;
+
+  applyForce(body, {
+    x: dir.x * totalMag,
+    y: dir.y * totalMag
+  });
+}
+\`\`\`
+
+> **기억 문장:** 스프링은 "벗어난 거리"에 비례해 되돌리고, 감쇠는 "움직이는 속도"에 비례해 붙잡는다.
+
+> **35번 감쇠와 무엇이 다른가?** 35번의 \`velocity *= damping\`은 목표 없이 그냥 속도를 줄이는 마찰입니다. 스프링은 **돌아갈 목표 지점(평형 위치)이 있다는 점**이 다릅니다. 그리고 78번 LERP 추적과 비교하면, LERP는 속도 개념 없이 위치를 목표 쪽으로 끌어당기기만 하므로 절대 넘어가지 않지만, 스프링은 속도(관성)를 가지므로 목표를 살짝 지나쳤다가 되돌아오는 **탄력 있는 오버슈트**가 생깁니다. 이 오버슈트가 바로 UI와 카메라를 "살아 있게" 만드는 감각입니다.
+
+> [!WARNING]
+> 스프링은 \`dt\`가 크거나 \`stiffness\`가 아주 높으면 **폭발합니다**. 힘이 커질수록 속도가 커지고, 속도가 커질수록 다음 프레임에 더 멀리 지나쳐서 힘이 더 커지는 악순환에 빠지기 때문입니다(22.1에서 말한 수치 적분의 불안정성). 뻣뻣한 스프링을 쓸 때는 고정 \`dt\`를 사용하거나, 물리 스텝을 여러 번 잘게 쪼개어(substep) 계산해야 합니다.
+
+> **$k$와 $c$를 직접 튜닝하기 어렵다면:** 강성 $k$와 감쇠 $c$는 질량에 따라 체감이 달라져서 손으로 맞추기가 까다롭습니다. 그래서 카메라나 UI처럼 **원하는 느낌을 직접 지정하고 싶을 때는**, 같은 스프링을 **진동수 $\\omega$와 감쇠비 $\\zeta$**로 바꿔 쓰는 편이 훨씬 편합니다. 두 표현은 완전히 같은 물리이며 $\\omega^2 = k/m$, $2\\zeta\\omega = c/m$의 관계로 연결됩니다. 특히 $\\zeta = 1$은 **전혀 흔들리지 않으면서 가장 빠르게 도달하는 임계 감쇠(critical damping)**라, 카메라 추적의 기본값으로 쓰기 좋습니다. 이 형태의 코드는 **100번 스프링 카메라와 임계 감쇠**에서 다룹니다.
+
 ---
 
 ## 24. 반사는 법선 방향 성분을 뒤집는 것
@@ -2019,7 +2280,7 @@ function solveLaunchAngle(targetX, targetY, v0, g) {
 r = v - 2 * dot(v, n) * n
 \`\`\`
 
-단, \`n\`은 정규화되어 있어야 합니다.
+단, \`n\`은 정규화되어 있어야 합니다. 그리고 여기서 \`n\`은 **표면에서 물체를 향하는 방향**(벽 → 공)입니다. 이 절과 27.1의 벽 튕김 코드는 이 규약을 씁니다. 뒤의 물리엔진 파트(51번 이후)에서는 물체가 둘 다 움직이므로 **A → B** 방향 법선을 쓰는데, 두 규약은 서로 반대라는 점을 기억해 두세요.
 
 코드:
 
@@ -2048,12 +2309,17 @@ const reflected = reflect(velocity, wallNormal);
 탄성 계수를 넣으면 덜 튕기게 만들 수 있습니다.
 
 \`\`\`js
+// n: 표면에서 물체를 향하는 법선 (벽 → 공)
 function reflectWithRestitution(v, n, restitution) {
-  const r = reflect(v, n);
+  const vn = dot(v, n);
 
+  // vn >= 0이면 표면에서 이미 멀어지는 중이므로 바꾸지 않음
+  if (vn >= 0) return { ...v };
+
+  // 반발계수는 법선 성분에만 적용한다. 접선 성분은 마찰이 담당한다.
   return {
-    x: r.x * restitution,
-    y: r.y * restitution
+    x: v.x - (1 + restitution) * vn * n.x,
+    y: v.y - (1 + restitution) * vn * n.y
   };
 }
 \`\`\`
@@ -2240,21 +2506,29 @@ b.position.y += normal.y * penetration * 0.5;
 
 충돌 후 서로 멀어지는 방향으로 속도를 바꿔야 합니다.
 
-입문 단계에서는 단순하게 법선 방향 속도를 뒤집는 식으로 시작할 수 있습니다.
+입문 단계에서는 단순하게 법선 방향 속도를 뒤집는 식으로 시작할 수 있습니다. 아래 함수는 **질량이 무한대인 벽에 부딪히는 물체 하나**만 고려한 단순 버전입니다.
+
+> [!WARNING]
+> **법선 방향 규약에 주의:** 아래 \`surfaceNormal\`은 24번 반사 공식과 같은 **표면에서 물체를 향하는 방향**(벽 → 공)입니다.
+> 바로 위에서 두 원의 위치 보정에 쓴 \`normal\`(= **A → B** 방향)과는 **정반대**이므로, 그 값을 그대로 넣으면 안 됩니다. 부호가 반대로 들어가면 "이미 멀어지는 중" 판정이 거꾸로 뒤집혀서, 충돌할 때는 안 튕기고 멀어질 때 튕기는 버그가 생깁니다.
+> 두 물체가 모두 움직이는 일반적인 충돌은 A → B 규약으로 통일해 **64번 \`resolveCollisionVelocity\`**를 쓰세요.
 
 \`\`\`js
-function bounceVelocity(v, normal, restitution) {
-  const vn = dot(v, normal);
+// surfaceNormal: 표면에서 물체를 향하는 법선 (벽 → 물체)
+function bounceVelocity(v, surfaceNormal, restitution) {
+  const vn = dot(v, surfaceNormal);
 
-  // 이미 멀어지는 중이면 건드리지 않음
+  // vn > 0이면 표면에서 이미 멀어지는 중이므로 건드리지 않음
   if (vn > 0) return v;
 
   return {
-    x: v.x - (1 + restitution) * vn * normal.x,
-    y: v.y - (1 + restitution) * vn * normal.y
+    x: v.x - (1 + restitution) * vn * surfaceNormal.x,
+    y: v.y - (1 + restitution) * vn * surfaceNormal.y
   };
 }
 \`\`\`
+
+여기서 \`(1 + restitution)\` 계수가 왜 나오는지 지금은 "튕김을 반영하려면 법선 속도를 뒤집고 반발계수만큼 더 얹는다" 정도로만 받아들여도 됩니다. 이 계수의 정확한 유도는 뒤쪽 **63.1 임펄스 공식 유도 과정**에서 질량과 함께 일반화하여 다룹니다.
 
 ---
 
@@ -2279,27 +2553,72 @@ z축
 
 ![[ cosθ -sinθ 0 ]](./images/diagram_042.svg)
 
+세 축의 회전 행렬을 나란히 놓고 보면 규칙이 한눈에 보입니다.
 
-## 28.1 x축 회전
+$$R_x(\\theta) = \\begin{bmatrix} 1 & 0 & 0 \\\\ 0 & \\cos\\theta & -\\sin\\theta \\\\ 0 & \\sin\\theta & \\cos\\theta \\end{bmatrix} \\quad
+R_y(\\theta) = \\begin{bmatrix} \\cos\\theta & 0 & \\sin\\theta \\\\ 0 & 1 & 0 \\\\ -\\sin\\theta & 0 & \\cos\\theta \\end{bmatrix} \\quad
+R_z(\\theta) = \\begin{bmatrix} \\cos\\theta & -\\sin\\theta & 0 \\\\ \\sin\\theta & \\cos\\theta & 0 \\\\ 0 & 0 & 1 \\end{bmatrix}$$
 
-![[ 1 0 0 ]](./images/diagram_043.svg)
+외우지 말고 이 규칙만 기억하면 됩니다.
 
+\`\`\`txt
+회전축이 되는 줄과 칸은 그대로 둔다 (1과 0만 남는다).
+나머지 2x2 자리에 12번에서 배운 2D 회전 행렬을 그대로 끼워 넣는다.
+\`\`\`
 
-## 28.2 y축 회전
+### 왜 y축 회전만 부호가 뒤집혀 보일까?
 
-![[ cosθ 0 sinθ ]](./images/diagram_044.svg)
+$R_y$만 유독 $-\\sin\\theta$가 아래쪽에 있어서 오타처럼 보입니다. 하지만 맞습니다.
 
+축의 순환 순서가 $x \\to y \\to z \\to x$이기 때문입니다. $R_z$는 ($x$에서 $y$로) 도는 회전이고 $R_x$는 ($y$에서 $z$로) 도는 회전이라 순서가 자연스럽지만, $R_y$는 ($z$에서 $x$로) 도는 회전이라 행렬에 적을 때 행과 열의 순서가 뒤집혀서 부호가 반대로 나타납니다. **버그가 아니라 축 순환의 결과**이므로, 직접 구현할 때 "부호가 이상한데?" 하고 고치면 오히려 틀립니다.
 
-3D에서는 회전 순서가 더 중요합니다.
+## 28.1 3D 회전 행렬 코드
+
+\`\`\`js
+// [JavaScript - 3x3 회전 행렬 (row-major)]
+function rotationX(angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return [
+    1, 0,  0,
+    0, c, -s,
+    0, s,  c
+  ];
+}
+
+function rotationY(angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return [
+     c, 0, s,
+     0, 1, 0,
+    -s, 0, c
+  ];
+}
+
+function rotationZ(angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return [
+    c, -s, 0,
+    s,  c, 0,
+    0,  0, 1
+  ];
+}
+\`\`\`
+
+## 28.2 3D에서는 회전 순서가 결과를 바꾼다
 
 ![rotateX → rotateY](./images/diagram_045.svg)
 
+2D에서는 회전이 하나뿐이라 순서 문제가 없었지만, 3D에서는 **곱하는 순서가 바뀌면 결과가 달라집니다.**
 
-결과가 달라집니다.
+$$R_x R_y \\neq R_y R_x$$
+
+직접 해보면 바로 느껴집니다. 책을 하나 들고 **① x축으로 90도 돌린 뒤 y축으로 90도** 돌리는 것과, **② y축으로 먼저 90도 돌린 뒤 x축으로 90도** 돌리는 것은 표지가 향하는 방향이 완전히 달라집니다.
+
+> **실무 함정:** 그래서 "회전값 \`{x: 30, y: 45, z: 10}\`"이라는 말은 그 자체로는 **의미가 불완전합니다.** 어떤 순서로 곱했는지(XYZ? ZYX? YXZ?)를 알아야만 실제 방향이 정해집니다. 엔진마다 이 순서 규약이 달라서, 다른 엔진에서 뽑은 Euler 각도를 그대로 옮기면 모델이 엉뚱한 방향을 보는 사고가 자주 납니다. Three.js가 \`Euler\` 객체에 \`order\` 필드를 따로 두는 이유가 이것입니다.
 
 ---
 
-## 29. 짐벌락과 쿼터니언 맛보기
+## 29. 짐벌락: 축 하나가 사라지는 순간
 
 Euler 회전은 x, y, z축 회전을 순서대로 적용하는 방식입니다.
 
@@ -2307,25 +2626,45 @@ Euler 회전은 x, y, z축 회전을 순서대로 적용하는 방식입니다.
 rotation = { x, y, z }
 \`\`\`
 
-이 방식은 이해하기 쉽지만, 특정 각도에서 축이 겹쳐 회전 자유도가 사라지는 문제가 생깁니다.
+이 방식은 사람이 읽기 쉽지만, **특정 각도에서 회전 축 하나를 통째로 잃어버리는** 치명적인 문제가 있습니다. 이것이 **짐벌락(Gimbal Lock)**입니다.
 
-이걸 짐벌락이라고 합니다.
+### 29.1 짐벌락이 실제로 일어나는 순간
 
-쿼터니언은 이 문제를 줄이기 위해 3D 회전을 표현하는 방식입니다.
-
-입문 단계에서는 이렇게만 기억해도 됩니다.
+말로만 "축이 겹친다"고 하면 와닿지 않으니, 비행기를 예로 숫자를 직접 넣어봅시다. 비행기의 회전은 보통 이렇게 부릅니다.
 
 \`\`\`txt
-Euler: 사람이 읽기 쉬운 회전값
-Quaternion: 컴퓨터가 안정적으로 회전하기 좋은 값
+Yaw   (좌우 방향 틀기) - 위아래 축 회전
+Pitch (기수 들기/내리기) - 좌우 날개 축 회전
+Roll  (몸통 비틀기) - 앞뒤 축 회전
 \`\`\`
 
-그래픽스 엔진에서는 보통:
+이제 **Pitch를 정확히 $90^\\circ$로 올려** 비행기가 하늘을 수직으로 바라보게 만듭니다.
+
+이 상태에서 Yaw를 돌려보면, 비행기는 제자리에서 몸통을 비틉니다. 그런데 Roll을 돌려도 **똑같이 몸통을 비틉니다.** 기수를 하늘로 세우는 순간, 원래 서로 수직이던 Yaw 축과 Roll 축이 **같은 축 위로 포개져 버렸기 때문**입니다.
 
 \`\`\`txt
-UI에서는 Euler로 보여주고,
-내부 계산은 Quaternion으로 처리한다.
+Pitch = 0도   → Yaw 축과 Roll 축이 서로 수직. 자유도 3개. 정상.
+Pitch = 90도  → Yaw 축과 Roll 축이 완전히 겹침. 자유도 2개. 축 하나 증발!
 \`\`\`
+
+즉 **회전 값 3개를 갖고 있는데 실제로 만들 수 있는 회전은 2방향뿐인 상태**가 됩니다. 이 자세에서는 아무리 Yaw와 Roll을 조합해도 만들어낼 수 없는 방향이 생기고, 그 방향으로 가려 하면 물체가 갑자기 홱 돌아가거나(스냅) 카메라가 뒤집힙니다. 1인칭 카메라에서 고개를 하늘로 완전히 젖혔을 때 화면이 빙글 도는 버그가 바로 이것입니다.
+
+수학적으로는 $R_y(90^\\circ)$가 x축과 z축을 서로 맞바꿔 놓기 때문에, 남은 두 회전 행렬이 같은 축의 회전으로 축약되어 **행렬 곱의 결과가 하나의 각도 합에만 의존하게 됩니다.**
+
+### 29.2 왜 각도를 조심해서 다뤄도 못 고치나
+
+짐벌락은 코드를 잘못 짜서 생기는 버그가 아닙니다. **"3D 회전을 세 개의 각도로 순서대로 표현한다"는 방식 자체에 내재된 한계**입니다. 각도 순서를 XYZ에서 ZYX로 바꾸면 잠기는 자세만 옮겨갈 뿐, 잠기는 자세가 사라지지는 않습니다.
+
+그래서 해법은 각도를 더 잘 다루는 것이 아니라, **회전을 각도 3개로 표현하는 것 자체를 그만두는 것**입니다. 그 대안이 다음 절의 쿼터니언입니다.
+
+> **기억 문장:** 짐벌락은 버그가 아니라 Euler 각 표현법의 구조적 한계다. Pitch가 90도가 되면 축 하나가 증발한다.
+
+\`\`\`txt
+Euler: 사람이 읽고 입력하기 쉬운 회전값 (Inspector에 표시)
+Quaternion: 짐벌락 없이 안정적으로 계산/보간하기 좋은 값 (내부 처리)
+\`\`\`
+
+쿼터니언의 실체는 **72번**에서 코드와 함께 자세히 다룹니다.
 
 ---
 
@@ -2501,7 +2840,7 @@ velocity.x *= 0.98;
 velocity.y *= 0.98;
 \`\`\`
 
-하지만 프레임마다 곱하면 fps에 따라 결과가 달라질 수 있습니다.
+하지만 프레임마다 \`0.98\`을 곱하면 60fps에서는 초당 60번, 144fps에서는 초당 144번 곱해져서 **fps가 높을수록 더 빨리 멈춰버립니다.** 즉 프레임 독립적이지 않습니다.
 
 조금 더 안정적인 방식:
 
@@ -2511,6 +2850,9 @@ const damping = Math.exp(-friction * dt);
 velocity.x *= damping;
 velocity.y *= damping;
 \`\`\`
+
+> **왜 하필 \`exp\`인가?**
+> 감쇠를 "매 순간 속도에 비례해서 줄어든다"($\\frac{dv}{dt} = -\\text{friction}\\cdot v$)는 미분방정식으로 보면, 그 해가 정확히 지수함수 $v(t) = v_0\\, e^{-\\text{friction}\\cdot t}$입니다. 그래서 한 프레임($dt$)만큼 감쇠시키는 계수는 $e^{-\\text{friction}\\cdot dt}$가 됩니다. 이렇게 하면 \`dt\`를 어떻게 쪼개도 같은 시간이 지나면 같은 만큼 줄어들어 **fps와 무관하게 동일한 감쇠**가 보장됩니다.
 
 예:
 
@@ -2769,12 +3111,16 @@ y축에서 작으면 y축으로 밀어냅니다.
 
 \`\`\`js
 function getAABBManifold(a, b) {
-  const overlapX = Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x);
-  const overlapY = Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y);
+  const intersectsX = a.min.x < b.max.x && a.max.x > b.min.x;
+  const intersectsY = a.min.y < b.max.y && a.max.y > b.min.y;
 
-  if (overlapX <= 0 || overlapY <= 0) {
+  if (!intersectsX || !intersectsY) {
     return null;
   }
+
+  // 단순 교집합 길이가 아니라, 포함 관계에서도 완전히 분리되는 최소 거리
+  const overlapX = Math.min(a.max.x - b.min.x, b.max.x - a.min.x);
+  const overlapY = Math.min(a.max.y - b.min.y, b.max.y - a.min.y);
 
   const centerA = {
     x: (a.min.x + a.max.x) / 2,
@@ -2788,20 +3134,20 @@ function getAABBManifold(a, b) {
 
   if (overlapX < overlapY) {
     return {
-      normal: { x: centerA.x < centerB.x ? -1 : 1, y: 0 },
+      normal: { x: centerA.x < centerB.x ? 1 : -1, y: 0 },
       penetration: overlapX
     };
   }
 
   return {
-    normal: { x: 0, y: centerA.y < centerB.y ? -1 : 1 },
+    normal: { x: 0, y: centerA.y < centerB.y ? 1 : -1 },
     penetration: overlapY
   };
 }
 \`\`\`
 
-여기서 \`normal\`은 보통 **B에서 A를 밀어내는 방향**으로 정했습니다.  
-프로젝트마다 방향 기준은 다를 수 있으니 하나로 통일하는 게 중요합니다.
+여기서 \`normal\`은 **A에서 B를 밀어내는 방향(A → B)**으로 정했습니다.  
+이 책 전체(60번 OBB, 63.1 임펄스, 64번 속도 반응, 61번 위치 보정)가 모두 이 "A → B" 규약을 쓰므로 반드시 통일해야 합니다. 규약이 반대로 뒤집히면 위치 보정 코드가 두 물체를 밀어내는 대신 오히려 더 겹치게 만드는 버그가 생깁니다.
 
 ---
 
@@ -2951,7 +3297,7 @@ function intersectCircleAABB(circle, box) {
 
 단순히 겹쳤는지 판정하는 것 외에, 물리가 반응하려면 충돌 법선(normal)과 겹침 깊이(penetration)가 필요합니다. 
 
-원 중심에서 박스 외부로 밀어내야 하므로, 가장 가까운 점(closest)에서 원 중심으로 향하는 벡터를 구해 normal을 도출합니다.
+이 책의 공통 규약대로 \`circle\`을 A, \`box\`를 B로 보고 법선은 **A → B** 방향으로 반환합니다. 따라서 바깥 충돌에서는 원 중심에서 박스의 가장 가까운 점으로 향하는 벡터를 사용합니다. 뒤의 위치 보정이 A를 \`-normal\`, B를 \`+normal\` 방향으로 움직이므로 원은 박스 바깥으로 밀려납니다.
 
 코드:
 
@@ -2962,6 +3308,7 @@ function getCircleAABBManifold(circle, box) {
     y: clamp(circle.position.y, box.min.y, box.max.y)
   };
 
+  // 충돌 거리 계산용: closest → circle
   const dx = circle.position.x - closest.x;
   const dy = circle.position.y - closest.y;
   const distSq = dx * dx + dy * dy;
@@ -2975,26 +3322,28 @@ function getCircleAABBManifold(circle, box) {
   // 원의 중심이 박스 내부에 완전히 갇힌 경우 예외 처리
   if (dist === 0) {
     // 박스의 4면 중 가장 가까운 면을 찾아서 밀어냄
-    const dl = circle.position.x - box.min.x;
-    const dr = box.max.x - circle.position.x;
-    const dt = circle.position.y - box.min.y;
-    const db = box.max.y - circle.position.y;
+    // (dt는 이 책에서 델타 타임을 뜻하므로, 거리 변수는 distTop처럼 따로 이름 짓는다)
+    const distLeft = circle.position.x - box.min.x;
+    const distRight = box.max.x - circle.position.x;
+    const distTop = circle.position.y - box.min.y;
+    const distBottom = box.max.y - circle.position.y;
 
-    const minOverlap = Math.min(dl, dr, dt, db);
+    const minOverlap = Math.min(distLeft, distRight, distTop, distBottom);
 
-    if (minOverlap === dl) {
-      return { normal: { x: -1, y: 0 }, penetration: circle.radius + dl };
-    } else if (minOverlap === dr) {
-      return { normal: { x: 1, y: 0 }, penetration: circle.radius + dr };
-    } else if (minOverlap === dt) {
-      return { normal: { x: 0, y: -1 }, penetration: circle.radius + dt };
+    if (minOverlap === distLeft) {
+      return { normal: { x: 1, y: 0 }, penetration: circle.radius + distLeft };
+    } else if (minOverlap === distRight) {
+      return { normal: { x: -1, y: 0 }, penetration: circle.radius + distRight };
+    } else if (minOverlap === distTop) {
+      return { normal: { x: 0, y: 1 }, penetration: circle.radius + distTop };
     } else {
-      return { normal: { x: 0, y: 1 }, penetration: circle.radius + db };
+      return { normal: { x: 0, y: -1 }, penetration: circle.radius + distBottom };
     }
   }
 
   return {
-    normal: { x: dx / dist, y: dy / dist },
+    // 원(A) → 박스(B). 거리 계산 벡터와 반대 방향이다.
+    normal: { x: -dx / dist, y: -dy / dist },
     penetration: circle.radius - dist
   };
 }
@@ -3044,17 +3393,6 @@ function getBoxAxes(rotation) {
   };
 }
 \`\`\`
-
-## 80. 레이캐스팅 (Ray Casting) 기초
-
-레이캐스팅은 시작점(Origin)과 방향(Direction)을 가진 광선(Ray)을 쏘아 공간 속 물체와 충돌하는 지점을 계산하는 기법입니다.
-
-광선의 공식:
-\`\`\`txt
-P(t) = rayOrigin + rayDir * t  (단, t >= 0)
-\`\`\`
-
-![레이캐스팅 시각화](./images/diagram_076.svg)
 
 여기서:
 
@@ -3172,7 +3510,8 @@ function overlapInterval(a, b) {
 }
 
 function getIntervalOverlap(a, b) {
-  return Math.min(a.max, b.max) - Math.max(a.min, b.min);
+  // 한 구간이 다른 구간 안에 완전히 포함된 경우까지 고려한 분리 거리
+  return Math.min(a.max - b.min, b.max - a.min);
 }
 \`\`\`
 
@@ -3341,9 +3680,11 @@ function getOBBManifold(a, b) {
 가장 단순한 방법:
 
 \`\`\`txt
-A를 normal 반대 방향으로 절반 밀고,
-B를 normal 방향으로 절반 민다.
+A를 normal 반대 방향으로 밀고,
+B를 normal 방향으로 민다.
 \`\`\`
+
+이때 **얼마씩 나눠서 밀지**가 중요합니다. 무조건 절반씩 밀면 벽이나 바닥처럼 움직이면 안 되는 물체(\`invMass = 0\`)까지 밀려납니다. 그래서 **역질량에 비례해서** 보정량을 나눕니다. 가벼운 물체(역질량이 큼)가 많이 밀려나고, 무거운 물체는 조금만 밀려나며, 역질량이 0인 물체는 아예 움직이지 않습니다. (71번 거리 제약에서 쓰는 가중 방식과 같은 원리입니다.)
 
 코드:
 
@@ -3352,20 +3693,30 @@ function positionalCorrection(a, b, manifold) {
   const percent = 0.8;
   const slop = 0.01;
 
-  const correctionMag = Math.max(manifold.penetration - slop, 0) * percent;
+  const invMassSum = a.invMass + b.invMass;
+
+  // 둘 다 고정 물체이면 밀어낼 수 없고 0으로 나누게 된다.
+  if (invMassSum === 0) {
+    return;
+  }
+
+  const correctionMag = Math.max(manifold.penetration - slop, 0) * percent / invMassSum;
 
   const correction = {
     x: manifold.normal.x * correctionMag,
     y: manifold.normal.y * correctionMag
   };
 
-  a.position.x -= correction.x * 0.5;
-  a.position.y -= correction.y * 0.5;
+  // 역질량에 비례해서 나눠 민다. invMass가 0인 물체는 움직이지 않는다.
+  a.position.x -= correction.x * a.invMass;
+  a.position.y -= correction.y * a.invMass;
 
-  b.position.x += correction.x * 0.5;
-  b.position.y += correction.y * 0.5;
+  b.position.x += correction.x * b.invMass;
+  b.position.y += correction.y * b.invMass;
 }
 \`\`\`
+
+질량이 같은 두 물체라면 \`a.invMass / invMassSum\`이 정확히 0.5가 되므로, 결국 절반씩 미는 것과 같아집니다.
 
 \`slop\`은 아주 작은 겹침은 무시하기 위한 값입니다.  
 이게 없으면 물체가 미세하게 떨릴 수 있습니다.
@@ -3399,32 +3750,55 @@ function positionalCorrection(a, b, manifold) {
 힘을 아주 짧은 시간 동안 강하게 준 결과가 임펄스다.
 \`\`\`
 
-공을 벽에 던졌을 때, 벽이 공을 순간적으로 툭 밀어냅니다.  
-그 “툭”이 임펄스입니다.
+공을 벽에 던졌을 때, 벽이 공을 순간적으로 툭 밀어냅니다. 그 “툭”이 임펄스(충격량)입니다.
 
-기억 문장:
+> **기억 문장:** 임펄스는 속도를 순간적으로 바꾸는 충돌 반응이다.
 
-\`\`\`txt
-임펄스는 속도를 순간적으로 바꾸는 충돌 반응이다.
-\`\`\`
+### 63.1 임펄스 공식 유도 과정 (Newton의 반발법칙과 운동량 보존)
 
-단순한 2D 충돌 임펄스 공식:
+물리엔진에서 두 물체가 부딪혔을 때 속도를 순간적으로 바꾸기 위해 적용하는 **임펄스 크기 $j$** 공식이 어떻게 나왔는지 유도해봅시다.
 
-\`\`\`txt
-j = -(1 + e)(relativeVelocity · normal) / (invMassA + invMassB)
-\`\`\`
+1. **충돌 후 속도 변화 정의:**
+   두 물체 $A$와 $B$가 충돌할 때, 작용·반작용 법칙에 의해 $A$는 충돌 법선 방향($n$)의 반대로 $-j \\cdot n$ 만큼의 충격량을 받고, $B$는 $j \\cdot n$ 만큼의 충격량을 받습니다. 뉴턴의 운동 법칙($F=ma$, 즉 $\\Delta v = J/m$)에 따라 충돌 후 속도 $v'_A, v'_B$는 다음과 같이 나타낼 수 있습니다:
+   $$v'_A = v_A - \\frac{j}{m_A}n = v_A - j \\cdot m_A^{-1}n$$
+   $$v'_B = v_B + \\frac{j}{m_B}n = v_B + j \\cdot m_B^{-1}n$$
+   *(여기서 $m^{-1}$은 역질량인 \`invMass\`를 나타냅니다.)*
+
+2. **충돌 후 법선 방향 상대 속도 구하기:**
+   두 물체의 상대 속도를 $v_{rel} = v_B - v_A$ 라고 할 때, 법선 방향 성분은 여기에 법선 벡터 $n$을 내적한 값($v_{rel} \\cdot n$)입니다.
+   충돌 후의 법선 방향 상대 속도를 전개해봅니다:
+   $$v'_{rel} \\cdot n = (v'_B - v'_A) \\cdot n$$
+   $$= \\left( (v_B + j \\cdot m_B^{-1}n) - (v_A - j \\cdot m_A^{-1}n) \\right) \\cdot n$$
+   $$= (v_B - v_A) \\cdot n + j(m_A^{-1} + m_B^{-1})(n \\cdot n)$$
+   법선 벡터 $n$은 정규화되어 있으므로 자기 자신과의 내적 $n \\cdot n = 1$입니다. 따라서 식은 다음과 같이 간단해집니다:
+   $$v'_{rel} \\cdot n = v_{rel} \\cdot n + j(m_A^{-1} + m_B^{-1})$$
+
+3. **뉴턴의 반발 법칙(Restitution) 대입:**
+   뉴턴의 충돌 법칙에 따르면, 충돌 후 법선 방향 상대 속도는 충돌 전 상대 속도에 반발계수 $e$와 마이너스를 곱한 값입니다.
+   $$v'_{rel} \\cdot n = -e(v_{rel} \\cdot n)$$
+
+4. **결합하여 $j$에 대해 풀기:**
+   위의 두 식을 같게 놓고 임펄스 크기 $j$에 대해 정리합니다:
+   $$-e(v_{rel} \\cdot n) = v_{rel} \\cdot n + j(m_A^{-1} + m_B^{-1})$$
+   $$j(m_A^{-1} + m_B^{-1}) = -(1 + e)(v_{rel} \\cdot n)$$
+   $$j = \\frac{-(1 + e)(v_{rel} \\cdot n)}{m_A^{-1} + m_B^{-1}}$$
+
+이것이 바로 물리엔진이 충돌 반응을 계산할 때 사용하는 **선형 임펄스 공식**입니다.
 
 여기서:
+- $e$ : 반발계수(restitution, \`restitution\`), $0 \\sim 1$ 사이의 값.
+- $v_{rel}$ : 충돌 전 두 물체의 상대 속도 ($v_B - v_A$).
+- $n$ : 충돌 표면의 법선 벡터 (A에서 B를 밀어내는 방향).
+- $m_A^{-1}, m_B^{-1}$ : 각 물체의 역질량 (\`invMass\`).
 
 ![e = 반발계수 restitution](./images/diagram_066.svg)
-
 
 반발계수 \`e\`는 얼마나 튕기는지를 뜻합니다.
 
 \`\`\`txt
-e = 0    전혀 안 튕김
- e = 0.5  적당히 튕김
- e = 1    완전 탄성 충돌에 가까움
+e = 0    전혀 안 튕김 (찰흙처럼 붙음)
+e = 0.5  적당히 튕김
+e = 1    완전 탄성 충돌 (에너지 손실 없이 그대로 튕김)
 \`\`\`
 
 ---
@@ -3449,8 +3823,14 @@ function resolveCollisionVelocity(a, b, manifold) {
   const e = Math.min(a.restitution, b.restitution);
   const invMassA = a.invMass;
   const invMassB = b.invMass;
+  const invMassSum = invMassA + invMassB;
 
-  const j = -(1 + e) * velAlongNormal / (invMassA + invMassB);
+  // 둘 다 고정 물체이면 반응시킬 필요가 없고 0으로 나누게 된다.
+  if (invMassSum === 0) {
+    return;
+  }
+
+  const j = -(1 + e) * velAlongNormal / invMassSum;
 
   const impulse = {
     x: manifold.normal.x * j,
@@ -3494,6 +3874,12 @@ normal 방향: 튕김
  tangent 방향: 미끄러짐 감소
 \`\`\`
 
+아래 코드는 세 가지 아이디어로 이루어져 있습니다.
+
+1. **접선 벡터 \`tangent\` 구하기:** 상대 속도 \`rv\`에서 법선 방향 성분(\`n * dot(rv, n)\`)을 빼면, 표면을 따라 미끄러지는 **접선 방향 성분만** 남습니다. 이것을 정규화한 것이 마찰이 작용할 방향입니다. (63.1의 임펄스가 법선 방향이었다면, 마찰은 여기에 수직인 접선 방향 버전입니다.)
+2. **접선 임펄스 크기 \`jt\`:** 63.1의 법선 임펄스 공식과 똑같은 구조인데, 법선 \`n\` 자리에 접선 \`tangent\`를 넣고 반발계수를 빼서 "접선 속도를 0으로 만드는" 크기를 구한 것입니다.
+3. **쿨롱 마찰 한계로 클램핑:** 마찰은 무한정 커질 수 없고 최대 \`수직항력 × 마찰계수\`까지만 작용합니다(쿨롱 마찰 법칙). 그래서 \`jt\`를 \`±(normalImpulseMag * mu)\` 범위로 잘라냅니다. 이 상한이 없으면 마찰이 물체를 오히려 반대로 밀어버리는 비현실적 현상이 생깁니다.
+
 접선 방향 구하기:
 
 \`\`\`js
@@ -3509,7 +3895,10 @@ function resolveFriction(a, b, manifold, normalImpulseMag) {
     y: rv.y - n.y * dot(rv, n)
   });
 
-  const jt = -dot(rv, tangent) / (a.invMass + b.invMass);
+  const invMassSum = a.invMass + b.invMass;
+  if (invMassSum === 0) return;
+
+  const jt = -dot(rv, tangent) / invMassSum;
 
   const mu = Math.sqrt(a.friction * b.friction);
   const maxFriction = normalImpulseMag * mu;
@@ -3643,27 +4032,39 @@ function applyForceAtPoint(body, force, point) {
 
 ## 68. 관성 모멘트 inertia
 
-질량이 직선 운동에서 “움직이기 어려움”이라면,  
-관성 모멘트는 회전 운동에서 “돌리기 어려움”입니다.
+질량이 직선 운동에서 “움직이기 어려움”을 나타낸다면, **관성 모멘트(Moment of Inertia, $I$)**는 회전 운동에서 “돌리기 어려움(회전 가속에 저항하는 정도)”을 나타냅니다.
 
-기억 문장:
+> **기억 문장:** 관성 모멘트는 회전 버전의 질량이다.
 
-\`\`\`txt
-관성 모멘트는 회전 버전의 질량이다.
-\`\`\`
+![질량 분포에 따른 관성 모멘트 차이](./images/diagram_068_inertia.svg)
 
-같은 질량이라도 길게 퍼져 있으면 돌리기 어렵습니다.
+같은 질량이라도 물체의 형태가 길게 퍼져 있거나 질량이 회전축에서 멀리 분포할수록 돌리기가 힘들어집니다(관성 모멘트가 커집니다).
 
 \`\`\`txt
-작은 공: 돌리기 쉬움
-긴 막대: 돌리기 어려움
+작은 공: 질량이 중심에 뭉쳐 있어 쉽게 회전함 (낮은 관성 모멘트)
+긴 막대: 질량이 양끝 멀리 분산되어 돌리기 어려움 (높은 관성 모멘트)
 \`\`\`
 
-박스의 관성 모멘트 예시:
+### 68.1 사각형의 관성 모멘트 공식과 \`/ 12\` 분모의 비밀
 
-\`\`\`txt
-I = mass * (width² + height²) / 12
-\`\`\`
+물리엔진에서 가로 \`width\`($w$), 세로 \`height\`($h$), 질량 \`mass\`($m$)인 사각형 박스의 관성 모멘트 공식은 다음과 같습니다.
+$$I = \\frac{m(w^2 + h^2)}{12}$$
+
+많은 개발자들이 이 공식의 분모에 왜 생뚱맞게 **12**가 들어가는지 궁금해합니다. 이는 대학 수학의 **적분(Integral)**에서 유도됩니다.
+
+1. **관성 모멘트의 기본 수학 정의:**
+   회전축에서 거리 $r$만큼 떨어진 아주 미세한 질량 $dm$들의 관성 모멘트는 $dI = r^2 dm$ 입니다. 전체 면적에 대해 이를 적분하면 다음과 같습니다.
+   $$I = \\int r^2 dm = \\int (x^2 + y^2) dm$$
+
+2. **1차원 균일한 막대(길이 $w$, 질량 $m$)의 회전 관성 계산:**
+   밀도가 일정한 두께가 없는 막대의 중심을 회전축으로 잡으면, 적분 구간은 $[-w/2, w/2]$가 되고, 미세 질량은 $dm = \\frac{m}{w} dx$가 됩니다.
+   $$I_{rod} = \\int_{-w/2}^{w/2} x^2 \\left(\\frac{m}{w} dx\\right) = \\frac{m}{w} \\left[ \\frac{x^3}{3} \\right]_{-w/2}^{w/2}$$
+   $$= \\frac{m}{w} \\left( \\frac{w^3}{24} - \\left(- \\frac{w^3}{24}\\right) \\right) = \\frac{m}{w} \\left(\\frac{w^3}{12}\\right) = \\frac{m w^2}{12}$$
+   *여기서 분모 **12**가 유도됩니다! $x^3/3$을 적분 구간 $[-w/2, w/2]$에 대입하면 각각 $\\frac{w^3}{24}$가 나오고($\\frac{(w/2)^3}{3} = \\frac{w^3}{24}$), 이 둘을 빼면 $\\frac{w^3}{24} + \\frac{w^3}{24} = \\frac{w^3}{12}$가 되기 때문입니다.*
+
+3. **2차원 사각형으로의 확장:**
+   2차원 사각형은 x축 방향 막대 성분과 y축 방향 막대 성분이 합쳐진 것과 같으므로(피타고라스 정리 $r^2 = x^2 + y^2$에 의해 선형적으로 더해짐), 각각 $x$축과 $y$축 방향 관성을 더하면 최종 공식이 완성됩니다.
+   $$I_{box} = \\frac{m w^2}{12} + \\frac{m h^2}{12} = \\frac{m(w^2 + h^2)}{12}$$
 
 코드:
 
@@ -3673,7 +4074,7 @@ function boxInertia(mass, width, height) {
 }
 \`\`\`
 
-보통 계산에서는 역질량처럼 역관성도 씁니다.
+보통 계산에서는 역질량(\`invMass\`)처럼 역관성(\`invInertia\`)을 곱하기 연산에 사용합니다.
 
 \`\`\`js
 body.invInertia = body.inertia === 0 ? 0 : 1 / body.inertia;
@@ -3724,26 +4125,34 @@ function integrate(body, dt) {
 
 ## 70. 충돌 지점과 회전 반응
 
-실제 충돌에서는 물체 중심끼리만 부딪히지 않습니다.  
-대부분은 모서리나 옆면의 특정 지점에서 충돌합니다.
+실제 충돌에서는 물체 중심끼리만 부딪히지 않습니다. 대부분은 모서리나 옆면의 특정 지점에서 충돌합니다.
 
 ![충돌점](./images/diagram_068.svg)
 
+충돌점이 중심에서 벗어나 있으면 물체는 회전합니다. 그래서 회전까지 포함한 물리 연산에서는 충돌 지점의 속도를 정확히 구해야 합니다.
 
-충돌점이 중심에서 벗어나 있으면 물체는 회전합니다.
+### 70.1 충돌 지점의 속도 공식 $v_p = v + \\omega \\times r$ 유도
 
-그래서 회전까지 포함한 임펄스는 더 복잡해집니다.
+회전하는 강체 위의 한 지점 $P$의 속도는 단순히 전체가 함께 이동하는 **선속도(Linear Velocity, $v$)**에, 회전으로 인해 발생하는 **회전 접선 속도(Rotational Velocity, $v_{rot}$)**를 더한 값입니다.
 
-필요한 값:
+![충돌 지점의 접촉 속도 구성](./images/diagram_070_contact_vel.svg)
 
-![ra = 충돌점 - A 중심](./images/diagram_069.svg)
+1. **회전 접선 속도의 크기와 방향:**
+   - 물체가 각속도 $\\omega$로 돌고 있을 때, 중심에서 거리 $r$만큼 떨어진 지점은 반경 $r$인 원 궤도를 따라 운동합니다.
+   - 접선 속도의 크기는 $v = r \\omega$ 입니다.
+   - 접선 속도의 방향은 회전 반경 벡터 $r$에 항상 **수직**입니다.
+   - 3D 물리에서는 이를 외적(Cross Product)으로 $\\vec{v}_{rot} = \\vec{\\omega} \\times \\vec{r}$ 로 정의합니다.
 
+2. **2D에서의 외적($\\omega \\times r$) 연산:**
+   - 2D 평면 물리에서는 회전축이 항상 z축(화면을 뚫고 나오는 축) 고정이므로, 각속도는 단순한 스칼라 값 $\\omega$로 표현됩니다.
+   - 스칼라 $\\omega$와 2D 벡터 $r = (r_x, r_y)$의 외적은 수학적으로 다음과 같이 정의되어 수직 벡터를 생성합니다.
+     $$\\vec{v}_{rot} = (-\\omega \\cdot r_y, \\omega \\cdot r_x)$$
+   - 이 결과 벡터는 $r$ 벡터와 내적하면 0이 되므로 정확히 수직이며, 회전 방향에 맞는 접선 속도 벡터가 됩니다.
 
-충돌점의 속도는 선속도 + 회전 때문에 생기는 속도를 합쳐야 합니다.
-
-2D에서 각속도가 만드는 접선 속도:
+코드:
 
 \`\`\`js
+// 2D 스칼라 각속도(s)와 2D 위치 벡터(v)의 외적 -> 수직 방향 접선 벡터 반환
 function crossScalarVec(s, v) {
   return {
     x: -s * v.y,
@@ -3755,17 +4164,45 @@ function crossScalarVec(s, v) {
 충돌점의 상대속도:
 
 \`\`\`js
+// 충돌점에서의 A와 B의 최종 결합 속도 구하기
 const velAAtContact = add(a.velocity, crossScalarVec(a.angularVelocity, ra));
 const velBAtContact = add(b.velocity, crossScalarVec(b.angularVelocity, rb));
+
+// 상대 속도 = B의 충돌점 속도 - A의 충돌점 속도
 const rv = sub(velBAtContact, velAAtContact);
 \`\`\`
 
-이 단계는 처음에는 어려워도 괜찮습니다.  
+이 상대 속도 \`rv\`를 사용하여 충돌 임펄스를 구해야 물체가 부딪혔을 때 튕겨 나가면서 동시에 팽이처럼 빙글빙글 도는 사실적인 물리 반응이 일어납니다.
+
 핵심 감각은 이것만 기억하면 됩니다.
 
 \`\`\`txt
-중심에서 벗어난 충돌은 회전을 만든다.
+중심에서 벗어난 충돌 지점의 속도는 '선속도 + 회전으로 인한 접선 속도'의 합이다.
 \`\`\`
+
+### 70.2 회전까지 포함한 완성 임펄스 공식
+
+63.1에서 유도한 선형 임펄스 공식은 물체가 회전하지 않는다고 가정한 버전이었습니다. 이제 충돌점이 중심에서 벗어나 있으면(팔 길이 $r$이 있으면) 임펄스가 속도뿐 아니라 **회전(각속도)도 바꾸므로**, 분모에 회전 저항 항이 추가됩니다.
+
+$$j = \\frac{-(1 + e)\\,(v_{rel} \\cdot n)}{m_A^{-1} + m_B^{-1} + \\dfrac{(r_A \\times n)^2}{I_A} + \\dfrac{(r_B \\times n)^2}{I_B}}$$
+
+* 앞의 두 항 $m_A^{-1} + m_B^{-1}$는 63.1과 동일한 **직선 운동의 저항**입니다.
+* 새로 붙은 $\\dfrac{(r_A \\times n)^2}{I_A}$, $\\dfrac{(r_B \\times n)^2}{I_B}$는 **회전 운동의 저항**입니다. 충돌점이 중심에서 멀거나($r$이 크거나) 관성 모멘트 $I$가 작을수록 회전이 잘 일어나므로, 그만큼 임펄스가 분산되어 작아집니다.
+* 여기서 $r \\times n$은 2D 외적 스칼라(\`cross2D(r, n)\`)입니다.
+
+이렇게 구한 $j$로 선속도와 각속도를 함께 갱신하면 회전 반응이 완성됩니다.
+
+\`\`\`js
+// 선속도 갱신 (63.1과 동일)
+a.velocity = sub(a.velocity, mul(n, j * a.invMass));
+b.velocity = add(b.velocity, mul(n, j * b.invMass));
+
+// 각속도 갱신 (새로 추가된 부분)
+a.angularVelocity -= a.invInertia * cross2D(ra, mul(n, j));
+b.angularVelocity += b.invInertia * cross2D(rb, mul(n, j));
+\`\`\`
+
+> 즉, 64번의 임펄스는 "직선 버전", 여기 70.2는 "회전까지 포함한 완성 버전"입니다. 실제 물리엔진은 이 완성 공식을 씁니다.
 
 ---
 
@@ -3788,7 +4225,7 @@ Constraint는 물체의 움직임에 조건을 거는 것입니다.
 Constraint는 “이 조건을 만족하도록 위치와 속도를 고치는 규칙”이다.
 \`\`\`
 
-가장 쉬운 예는 거리 제약입니다.
+가장 쉬운 예는 거리 제약입니다. 아래 첫 코드는 설명을 단순하게 하기 위해 **두 물체의 질량이 같고 둘 다 움직일 수 있다**고 가정하여 오차를 절반씩 나눕니다.
 
 \`\`\`txt
 A와 B 사이 거리는 항상 length여야 한다.
@@ -3828,50 +4265,336 @@ function solveDistanceConstraint(a, b, targetLength) {
 }
 \`\`\`
 
+질량이 다르거나 한쪽이 고정 물체라면 역질량에 비례해 보정량을 나눠야 합니다. \`invMass = 0\`인 물체는 움직이지 않습니다.
+
+\`\`\`js
+function solveDistanceConstraintWeighted(a, b, targetLength) {
+  const delta = sub(b.position, a.position);
+  const dist = Math.hypot(delta.x, delta.y);
+  const invMassSum = a.invMass + b.invMass;
+
+  if (dist === 0 || invMassSum === 0) return;
+
+  const error = dist - targetLength;
+  const n = { x: delta.x / dist, y: delta.y / dist };
+
+  a.position.x += n.x * error * (a.invMass / invMassSum);
+  a.position.y += n.y * error * (a.invMass / invMassSum);
+  b.position.x -= n.x * error * (b.invMass / invMassSum);
+  b.position.y -= n.y * error * (b.invMass / invMassSum);
+}
+\`\`\`
+
 이걸 여러 번 반복하면 로프, 천, 관절 같은 효과의 기초가 됩니다.
 
 ---
 
-## 72. 쿼터니언을 왜 배우는가
+## 72. 쿼터니언 (Quaternion)
 
-2D에서는 각도 하나면 회전이 끝납니다.
-
-\`\`\`txt
-rotation = 30도
-\`\`\`
-
-하지만 3D에서는 축이 3개입니다.
-
-\`\`\`txt
-rotateX
-rotateY
-rotateZ
-\`\`\`
-
-문제는 회전 순서가 결과를 바꾼다는 점입니다.
+29번에서 Euler 각도의 구조적 한계(짐벌락, 순서 의존성)를 봤습니다. 여기서는 그 대안인 쿼터니언의 **실체**를 봅니다.
 
 ![X → Y → Z 회전](./images/diagram_070.svg)
 
+### 72.1 핵심 아이디어: 축 하나와 각도 하나
 
-두 결과가 다릅니다.
-
-그리고 Euler 회전은 짐벌락 문제가 생길 수 있습니다.
-
-쿼터니언은 이 문제를 줄이고, 3D 회전을 안정적으로 다루기 위한 도구입니다.
-
-처음에는 이렇게만 기억해도 됩니다.
+쿼터니언을 어렵게 만드는 건 보통 "4차원 복소수"라는 설명입니다. 실무 감각으로는 이 한 문장이면 충분합니다.
 
 \`\`\`txt
-Euler = 사람이 보기 쉬운 회전값
-Quaternion = 컴퓨터가 안정적으로 회전 계산하기 좋은 값
+3D의 모든 회전은, 결국 "어떤 축 하나를 중심으로 얼마만큼 도는 것"으로 표현할 수 있다.
 \`\`\`
 
-게임엔진에서 보통:
+이것을 **오일러 회전 정리**라고 합니다. 아무리 복잡하게 이리저리 돌린 결과라도, 그것과 똑같은 최종 자세를 만드는 **단 하나의 회전축과 단 하나의 각도**가 반드시 존재합니다. 쿼터니언은 바로 그 **(축, 각도)를 담는 그릇**입니다.
+
+축을 3개로 쪼개지 않고 축 하나로 통째로 다루기 때문에, **애초에 겹칠 축이 없어서 짐벌락이 발생하지 않습니다.**
+
+### 72.2 쿼터니언의 구조
+
+쿼터니언은 숫자 4개로 이루어집니다. 회전축이 단위 벡터 $\\vec{a} = (a_x, a_y, a_z)$이고 회전각이 $\\theta$일 때:
+
+$$q = \\left(\\underbrace{\\cos\\frac{\\theta}{2}}_{w},\\ \\underbrace{a_x \\sin\\frac{\\theta}{2},\\ a_y \\sin\\frac{\\theta}{2},\\ a_z \\sin\\frac{\\theta}{2}}_{x,\\ y,\\ z}\\right)$$
+
+여기서 반드시 짚어야 할 두 가지가 있습니다.
+
+**1. 왜 하필 $\\theta/2$(반각)인가?**
+뒤에 나올 회전 공식이 쿼터니언을 벡터 **양옆에 두 번** 곱하는 형태($q v q^{-1}$)이기 때문입니다. 절반씩 두 번 적용되어 합쳐지면 결국 $\\theta$가 됩니다. "각도를 반씩 나눠 양쪽에서 한 번씩 미는 구조"라고 생각하면 됩니다.
+
+**2. 쿼터니언은 항상 정규화되어 있어야 합니다.**
+길이가 1인 쿼터니언(\`단위 쿼터니언\`)만이 순수한 회전을 나타냅니다. 길이가 1에서 벗어나면 회전에 스케일이 섞여 물체가 늘어나거나 찌그러집니다. 곱셈을 반복하면 부동소수점 오차가 쌓이므로, **실무에서는 주기적으로 정규화해 주어야 합니다.**
+
+\`\`\`js
+// [JavaScript - 쿼터니언 기본 연산]
+
+// 회전축(정규화된 단위 벡터)과 각도로부터 쿼터니언 생성
+function quatFromAxisAngle(axis, angle) {
+  const half = angle / 2;
+  const s = Math.sin(half);
+
+  return {
+    w: Math.cos(half),
+    x: axis.x * s,
+    y: axis.y * s,
+    z: axis.z * s
+  };
+}
+
+// 회전이 전혀 없는 상태 (항등 쿼터니언)
+const IDENTITY_QUAT = { w: 1, x: 0, y: 0, z: 0 };
+
+function quatNormalize(q) {
+  const len = Math.sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+  if (len === 0) return { ...IDENTITY_QUAT };
+
+  return { w: q.w / len, x: q.x / len, y: q.y / len, z: q.z / len };
+}
+
+// 켤레(conjugate). 단위 쿼터니언에서는 역회전(inverse)과 같다.
+function quatConjugate(q) {
+  return { w: q.w, x: -q.x, y: -q.y, z: -q.z };
+}
+\`\`\`
+
+> 각도가 0이면 $\\cos(0) = 1$, $\\sin(0) = 0$이므로 $q = (1, 0, 0, 0)$이 됩니다. 이것이 "회전 없음"을 뜻하는 **항등 쿼터니언**이며, 회전값을 초기화할 때 쓰는 기본값입니다. \`{w: 0, x: 0, y: 0, z: 0}\`으로 초기화하면 길이가 0이라 회전이 깨지므로 주의해야 합니다. 이건 실무에서 정말 흔한 실수입니다.
+
+### 72.3 회전 합성: 쿼터니언 곱셈
+
+행렬을 곱해서 변환을 합성했듯이, 쿼터니언도 **곱하면 회전이 합성**됩니다. 행렬과 마찬가지로 **순서가 중요하고(교환법칙 성립 안 함)**, 오른쪽 것이 먼저 적용됩니다.
+
+$$q_{total} = q_2 \\cdot q_1 \\qquad (q_1 \\text{을 먼저 회전한 뒤 } q_2 \\text{를 회전})$$
+
+\`\`\`js
+// 쿼터니언 곱셈 (해밀턴 곱). a * b = b를 먼저 적용한 뒤 a를 적용
+function quatMultiply(a, b) {
+  return {
+    w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+    x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+    y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+    z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w
+  };
+}
+\`\`\`
+
+이 공식은 외울 필요가 없습니다. **"쿼터니언 곱 = 회전 합성"**이라는 의미만 알면 됩니다.
+
+### 72.4 벡터를 실제로 회전시키기
+
+수학적으로 벡터 $\\vec{v}$를 쿼터니언 $q$로 회전시키는 공식은 다음과 같습니다.
+
+$$\\vec{v}' = q \\, \\vec{v} \\, q^{-1}$$
+
+($\\vec{v}$를 $w = 0$인 쿼터니언으로 취급해 양옆에서 곱합니다. 72.2에서 각도를 반으로 나눈 이유가 여기 있습니다.)
+
+하지만 실무 코드에서는 곱셈을 두 번 하지 않고, 이를 전개해 정리한 **더 빠른 형태**를 씁니다.
+
+\`\`\`js
+// v' = v + 2w(qv × v) + 2(qv × (qv × v))  를 정리한 표준 최적화 형태
+function quatRotateVector(q, v) {
+  // t = 2 * (쿼터니언의 벡터부 × v)
+  const tx = 2 * (q.y * v.z - q.z * v.y);
+  const ty = 2 * (q.z * v.x - q.x * v.z);
+  const tz = 2 * (q.x * v.y - q.y * v.x);
+
+  return {
+    x: v.x + q.w * tx + (q.y * tz - q.z * ty),
+    y: v.y + q.w * ty + (q.z * tx - q.x * tz),
+    z: v.z + q.w * tz + (q.x * ty - q.y * tx)
+  };
+}
+\`\`\`
+
+이제 캐릭터의 앞 방향을 구하는 것도 간단합니다. 로컬 기준 앞 방향 $(0, 0, -1)$을 캐릭터의 회전 쿼터니언으로 돌리면 됩니다.
+
+\`\`\`js
+const forward = quatRotateVector(player.rotation, { x: 0, y: 0, z: -1 });
+\`\`\`
+
+### 72.5 왜 실무에서 회전값을 쿼터니언으로 저장하는가
+
+| | Euler 각 (3개) | 회전 행렬 (9개) | 쿼터니언 (4개) |
+|---|---|---|---|
+| 짐벌락 | **발생함** | 없음 | 없음 |
+| 메모리 | 3 | 9 | 4 |
+| 합성 비용 | 비쌈(행렬 변환 필요) | 보통 | **쌈** |
+| 부드러운 보간 | **거의 불가능** | 어려움 | **쉬움 (SLERP)** |
+| 사람이 읽기 | **쉬움** | 어려움 | 어려움 |
+| 오차 보정 | - | 재직교화(어려움) | **정규화(쉬움)** |
+
+결론적으로 엔진은 이렇게 나눠 씁니다.
 
 \`\`\`txt
-Inspector에는 Euler 각도를 보여주고,
-내부 계산은 Quaternion으로 한다.
+Inspector / UI 입력 → Euler (사람이 읽기 쉬움)
+내부 저장 및 계산   → Quaternion (짐벌락 없음, 보간 쉬움)
+셰이더로 넘기기     → Matrix (GPU가 곱하기 좋음)
 \`\`\`
+
+## 72.5.1 Euler ↔ 쿼터니언 변환 (Three.js \`XYZ\` 기준)
+
+위 표대로 "UI는 Euler, 내부는 쿼터니언"으로 나눠 쓰려면 **둘 사이를 오가는 변환**이 반드시 필요합니다.
+
+> [!WARNING]
+> **변환 공식은 회전 순서 규약마다 다릅니다.** 28.2에서 말했듯 Euler 각도는 순서를 모르면 의미가 정해지지 않기 때문입니다. 아래 코드는 **Three.js의 기본 순서인 \`'XYZ'\`** 기준입니다. Unity(\`ZXY\`)나 다른 엔진의 값을 그대로 넣으면 다른 자세가 나옵니다. Three.js에서도 \`new THREE.Euler(x, y, z, 'ZYX')\`처럼 순서를 바꿔 쓸 수 있으므로, 변환 함수를 쓸 때는 **그 Euler 값이 어떤 순서로 만들어졌는지** 반드시 확인해야 합니다.
+
+**Euler → 쿼터니언** (Three.js \`Quaternion.setFromEuler\`와 동일):
+
+\`\`\`js
+// [JavaScript - Euler(라디안, XYZ 순서) → 쿼터니언]
+function quatFromEuler(euler) {
+  const c1 = Math.cos(euler.x / 2);
+  const c2 = Math.cos(euler.y / 2);
+  const c3 = Math.cos(euler.z / 2);
+
+  const s1 = Math.sin(euler.x / 2);
+  const s2 = Math.sin(euler.y / 2);
+  const s3 = Math.sin(euler.z / 2);
+
+  return {
+    w: c1 * c2 * c3 - s1 * s2 * s3,
+    x: s1 * c2 * c3 + c1 * s2 * s3,
+    y: c1 * s2 * c3 - s1 * c2 * s3,
+    z: c1 * c2 * s3 + s1 * s2 * c3
+  };
+}
+\`\`\`
+
+세 축을 각각 반각으로 나눠($\\theta/2$) 만든 쿼터니언 3개를 곱해 합성한 결과를 미리 전개해 둔 것일 뿐입니다. \`quatMultiply(qx, quatMultiply(qy, qz))\`와 결과가 같습니다.
+
+**쿼터니언 → Euler** (Three.js \`Euler.setFromQuaternion\`과 동일):
+
+쿼터니언에서 곧바로 각도를 뽑을 수는 없어서, 일단 회전 행렬로 펼친 뒤 원하는 성분을 역삼각함수로 뽑아냅니다.
+
+\`\`\`js
+// [JavaScript - 쿼터니언 → Euler(라디안, XYZ 순서)]
+function quatToEuler(q) {
+  // 1. 쿼터니언을 3x3 회전 행렬 성분으로 전개
+  const x2 = q.x + q.x, y2 = q.y + q.y, z2 = q.z + q.z;
+  const xx = q.x * x2, xy = q.x * y2, xz = q.x * z2;
+  const yy = q.y * y2, yz = q.y * z2, zz = q.z * z2;
+  const wx = q.w * x2, wy = q.w * y2, wz = q.w * z2;
+
+  const m11 = 1 - (yy + zz), m12 = xy - wz, m13 = xz + wy;
+  const m22 = 1 - (xx + zz), m23 = yz - wx;
+  const m32 = yz + wx,       m33 = 1 - (xx + yy);
+
+  // 2. XYZ 순서에 맞는 성분에서 각도를 역산
+  const y = Math.asin(clamp(m13, -1, 1));
+
+  let x, z;
+
+  // 3. 짐벌락 방어: |m13|이 1에 가까우면 y가 ±90도 근처라 x와 z를 분리할 수 없다
+  if (Math.abs(m13) < 0.9999999) {
+    x = Math.atan2(-m23, m33);
+    z = Math.atan2(-m12, m11);
+  } else {
+    x = Math.atan2(m32, m22);
+    z = 0; // 자유도가 하나 사라졌으므로 z를 0으로 고정하고 x가 전부 흡수한다
+  }
+
+  return { x, y, z };
+}
+\`\`\`
+
+\`asin\`에 \`clamp\`를 씌운 이유는 부동소수점 오차로 \`m13\`이 \`1.0000001\`이 되는 순간 \`asin\`이 \`NaN\`을 뱉어 회전이 통째로 깨지기 때문입니다. 실무에서 반드시 필요한 방어 코드입니다.
+
+### 짐벌락을 코드로 직접 확인하기
+
+29번에서 설명한 짐벌락이 이 변환에서 **눈에 보이는 형태로** 드러납니다. \`XYZ\` 순서에서는 **가운데 축인 $y$가 $\\pm 90^\\circ$**일 때 잠깁니다.
+
+\`\`\`js
+// y = 90도인 자세를 만들어 왕복 변환해 보면 (degToRad는 9번 참고)
+const euler = {
+  x: degToRad(40),
+  y: degToRad(90),
+  z: degToRad(25)
+};
+
+quatToEuler(quatFromEuler(euler));
+// 결과: { x: 65도, y: 90도, z: 0도 }   ← 40 + 25 = 65
+\`\`\`
+
+넣은 값과 **다른 값**이 나왔는데도 **회전 자체는 완전히 동일합니다.** $y = 90^\\circ$에서는 $x$축 회전과 $z$축 회전이 같은 축으로 포개져서, 물체의 최종 자세가 **$x$와 $z$의 합($x + z$)에만 의존**하게 되기 때문입니다. 40°/25°든 65°/0°든 구별할 방법이 없습니다. 축 하나가 증발했다는 29번의 말이 바로 이 뜻입니다.
+
+> **실무 결론:** 그래서 회전을 Euler로 **저장**하면 안 됩니다. 매 프레임 Euler로 누적하면 이런 자세에서 값이 튀고 회전이 홱 꺾입니다. 회전은 **쿼터니언으로 저장·누적·보간**하고, Euler는 **UI에 보여주거나 사람이 입력받는 순간에만 변환해서 쓰는 표시용 포맷**으로 취급하세요.
+
+---
+
+## 72.6 SLERP: 회전의 부드러운 보간
+
+> **실무 맥락 (Mental Hook) - 캐릭터가 목표를 부드럽게 바라보게 하기:**
+> 적 캐릭터가 플레이어 쪽으로 고개를 홱 꺾지 않고 자연스럽게 돌아보게 하고 싶습니다. 카메라가 목표 자세로 부드럽게 전환되게 하고 싶습니다. 78번의 LERP를 회전에 그대로 쓰면 어떻게 될까요?
+
+78번의 LERP는 위치나 색상 같은 **직선적인 값**에는 완벽하지만, **회전에는 그대로 쓸 수 없습니다.**
+
+두 쿼터니언을 단순 LERP하면 결과가 **4차원 구(hypersphere)의 표면에서 안쪽으로 파고드는 지름길(현)**을 그립니다. 이렇게 되면 두 가지 문제가 생깁니다.
+
+\`\`\`txt
+1. 길이가 1이 아니게 되어 회전이 찌그러진다. (정규화로 보정은 가능)
+2. 정규화하더라도 각속도가 일정하지 않다.
+   → 보간 중간 구간에서 빨라졌다가 끝에서 느려지는 등, 회전이 울컥거린다.
+\`\`\`
+
+**SLERP(Spherical Linear Interpolation, 구면 선형 보간)**는 지름길로 가로지르는 대신, **구의 표면을 따라 최단 호(arc)를 그리며** 이동합니다. 그 결과 **일정한 각속도**로 회전하는 완벽하게 매끄러운 보간이 됩니다.
+
+$$\\text{slerp}(q_0, q_1, t) = \\frac{\\sin((1-t)\\Omega)}{\\sin\\Omega} q_0 + \\frac{\\sin(t\\Omega)}{\\sin\\Omega} q_1 \\qquad (\\Omega = \\arccos(q_0 \\cdot q_1))$$
+
+여기서 $\\Omega$는 두 쿼터니언 사이의 각도이고, $q_0 \\cdot q_1$은 성분 4개를 곱해 더한 **4D 내적**입니다. (내적은 차원이 늘어나도 규칙이 같다는 5.4의 이야기가 여기서 또 쓰입니다.)
+
+구현할 때는 **반드시 처리해야 하는 예외 두 가지**가 있습니다.
+
+\`\`\`js
+// [JavaScript - 쿼터니언 구면 선형 보간]
+
+function quatDot(a, b) {
+  return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function slerp(a, b, t) {
+  let cosOmega = quatDot(a, b);
+  let end = b;
+
+  // [예외 1] 최단 경로 보장:
+  // q와 -q는 완전히 똑같은 회전을 나타낸다(이중 덮개, double cover).
+  // 내적이 음수면 반대편으로 멀리 돌아가는 중이므로, 부호를 뒤집어 가까운 길로 간다.
+  // 이 처리가 없으면 캐릭터가 10도만 돌면 될 것을 350도 반대로 빙 돌아버린다.
+  if (cosOmega < 0) {
+    end = { w: -b.w, x: -b.x, y: -b.y, z: -b.z };
+    cosOmega = -cosOmega;
+  }
+
+  let k0, k1;
+
+  // [예외 2] 두 회전이 거의 같으면 sin(Omega)가 0에 가까워져 0으로 나누게 된다.
+  // 이때는 호와 직선의 차이가 무의미하므로 그냥 선형 보간(LERP)으로 대체한다.
+  if (cosOmega > 0.9995) {
+    k0 = 1 - t;
+    k1 = t;
+  } else {
+    const omega = Math.acos(cosOmega);
+    const sinOmega = Math.sin(omega);
+
+    k0 = Math.sin((1 - t) * omega) / sinOmega;
+    k1 = Math.sin(t * omega) / sinOmega;
+  }
+
+  // 누적 오차를 막기 위해 마지막에 정규화
+  return quatNormalize({
+    w: a.w * k0 + end.w * k1,
+    x: a.x * k0 + end.x * k1,
+    y: a.y * k0 + end.y * k1,
+    z: a.z * k0 + end.z * k1
+  });
+}
+\`\`\`
+
+사용 예 (78번의 프레임 독립 추적 방식을 그대로 적용):
+
+\`\`\`js
+// 적 캐릭터가 목표 자세로 부드럽게 고개를 돌린다
+const t = 1 - Math.exp(-turnSpeed * dt);
+enemy.rotation = slerp(enemy.rotation, targetRotation, t);
+\`\`\`
+
+> **NLERP는 언제 쓰나?** 위 코드의 [예외 2]처럼 그냥 선형 보간 후 정규화하는 방식을 **NLERP**라고 합니다. SLERP보다 훨씬 빠르지만 각속도가 일정하지 않습니다. 두 회전의 차이가 작을 때는 그 차이가 눈에 보이지 않으므로, **수백 개 뼈대를 매 프레임 보간하는 스켈레탈 애니메이션 블렌딩에서는 성능 때문에 일부러 NLERP를 쓰는 경우가 많습니다.** 반면 카메라 전환처럼 크게 회전하며 부드러움이 중요한 곳에는 SLERP를 씁니다.
+
+> **기억 문장:** LERP는 직선으로 가로지르고, SLERP는 구의 표면을 따라 돈다. 회전은 SLERP다.
 
 ---
 
@@ -3895,7 +4618,14 @@ gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
    * $M = T \\cdot R \\cdot S$
 2. **View Matrix (뷰 행렬): 월드 공간 $\\rightarrow$ 카메라(뷰) 공간**
    * 세상 모든 물체를 **카메라 기준의 새로운 좌표계**로 재배치합니다. 카메라는 원점 \`(0, 0, 0)\`에 위치하고 카메라가 바라보는 시선 방향이 $-z$ 축이 되도록 세상을 반대 방향으로 평행이동 및 회전시킵니다.
-   * **LookAt 행렬 공식:** 카메라 위치 $\\vec{P}$, 타겟 방향 $\\vec{T}$, 카메라 상단 하늘 방향 $\\vec{U}$ 벡터를 통해 방향 축들(우측 $\\vec{R} = \\vec{D} \\times \\vec{U}$, 상단 $\\vec{Up} = \\vec{R} \\times \\vec{D}$, 시선 방향 $\\vec{D} = \\text{normalize}(\\vec{P} - \\vec{T})$)을 구한 뒤 아래와 같은 합성 행렬로 구성합니다.
+   * **수학적 배경 (카메라 변환의 역행렬):** 
+     카메라 역시 월드에 존재하는 물체이므로 카메라의 위치 이동($T$)과 회전($R_{cam}$)을 결합한 카메라 모델 행렬 $C = T \\cdot R_{cam}$을 가집니다. 카메라에서 바라본 세상의 좌표를 구하려면, 카메라가 원점으로 오도록 월드 전체를 거꾸로 이동하고 회전해야 합니다. 즉, 뷰 행렬 $V$는 **카메라 행렬의 역행렬($C^{-1}$)**입니다.
+     $$V = C^{-1} = (T \\cdot R_{cam})^{-1} = R_{cam}^{-1} \\cdot T^{-1}$$
+     - **이동의 역변환 ($T^{-1}$):** 카메라 위치가 $P = (P_x, P_y, P_z)$일 때, 반대 방향으로 평행이동하는 행렬입니다 (위 공식의 우측 행렬).
+     - **회전의 역변환 ($R_{cam}^{-1}$):** 회전 행렬은 각 축이 직교하는 직교 행렬(Orthogonal Matrix)이므로, 역행렬은 **전치 행렬(Transpose Matrix)**과 같습니다 ($R^{-1} = R^T$). 카메라의 우측축 $\\vec{R}$, 상단축 $\\vec{Up}$, 시선축 $\\vec{D}$를 행으로 배치하여 전치한 형태가 위 공식의 좌측 행렬입니다.
+   * **LookAt 행렬 공식:** 카메라 위치 $\\vec{P}$, 타겟 위치 $\\vec{T}$, 카메라 상단 하늘 방향 $\\vec{U}$ 벡터를 통해 세 방향 축을 순서대로 구한 뒤, 아래와 같은 두 역행렬의 합성 행렬로 구성합니다.
+     $$\\vec{D} = \\text{normalize}(\\vec{P} - \\vec{T}), \\qquad \\vec{R} = \\text{normalize}(\\vec{U} \\times \\vec{D}), \\qquad \\vec{Up} = \\vec{D} \\times \\vec{R}$$
+     여기서 $\\vec{D}$는 시선의 **반대** 방향(카메라 뒤쪽)임에 주의해야 합니다. 카메라가 원점에서 $-z$를 바라보는 표준 상황을 대입해 보면 $\\vec{D} = (0,0,1)$, $\\vec{U} = (0,1,0)$이고, $\\vec{U} \\times \\vec{D} = (1, 0, 0)$으로 정확히 오른쪽 축이 나옵니다. 외적은 순서를 바꾸면 부호가 뒤집히므로($\\vec{D} \\times \\vec{U} = (-1,0,0)$), 순서를 반대로 쓰면 화면이 좌우 반전된 뷰 행렬이 만들어집니다.
      $$V = \\begin{bmatrix} R_x & R_y & R_z & 0 \\\\ Up_x & Up_y & Up_z & 0 \\\\ D_x & D_y & D_z & 0 \\\\ 0 & 0 & 0 & 1 \\end{bmatrix} \\cdot \\begin{bmatrix} 1 & 0 & 0 & -P_x \\\\ 0 & 1 & 0 & -P_y \\\\ 0 & 0 & 1 & -P_z \\\\ 0 & 0 & 0 & 1 \\end{bmatrix}$$
 3. **Projection Matrix (투영 행렬): 카메라 공간 $\\rightarrow$ 클립 공간**
    * 3D 카메라 공간을 클립 공간(가시 범위 내부)으로 찌그러뜨려 $2D$ 스크린 영역으로 투영합니다.
@@ -3921,7 +4651,7 @@ gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
 2. **원근 분할 (GPU 처리):**
    * 하드웨어 GPU는 래스터라이저 단계 직전에 $x, y, z$ 성분을 $w$로 강제 나눕니다. 이를 **원근 분할**이라 하며, 그 결과 좌표는 $[-1, 1]$ 범위의 **정규화된 디바이스 좌표 (NDC, Normalized Device Coordinates)**가 됩니다.
    $$\\vec{P}_{ndc} = \\left(\\frac{x_{clip}}{w_{clip}}, \\frac{y_{clip}}{w_{clip}}, \\frac{z_{clip}}{w_{clip}}\\right)$$
-   * 분모 $w_{clip}$가 클수록(즉, 멀리 있을수록) 나눈 결과 좌표의 절댓값 크기가 원점에 가까워져(작아져) 멀리 있는 물체가 모니터 화면 중심 부근에 촘촘히 뭉쳐 작게 그려지게 됩니다.
+   * 같은 카메라 공간의 크기나 간격을 비교하면, 분모 $w_{clip}$가 클수록 화면에서 차지하는 폭과 높이가 작아집니다. 핵심은 좌표가 대략 \`x / 거리\`, \`y / 거리\`의 비율로 보인다는 것입니다. 물체의 중심이 무조건 화면 중앙으로 이동한다는 뜻은 아닙니다.
 
 반대로 **정사영 (Orthographic Projection)** 행렬은 $w$ 성분을 그냥 $1$로 보존하기 때문에 원근 분할을 해도 크기가 작아지지 않고 거리에 상관없이 원래의 기하학적 크기를 고스란히 유지합니다.
 
@@ -4096,14 +4826,53 @@ View: 카메라 기준으로 보기
 Projection: 3D를 화면에 찍기
 \`\`\`
 
+## 77.8 동차좌표 w
+
+\`\`\`txt
+점(위치)   → w = 1  이동이 적용됨
+방향(벡터) → w = 0  이동이 무시됨
+\`\`\`
+
+\`\`\`txt
+Model / View → 아핀 변환 (w = 1 유지, 원근 없음)
+Projection   → 아핀 아님 (w에 z를 넣어 원근 분할을 만듦)
+\`\`\`
+
+## 77.9 3D 회전
+
+\`\`\`txt
+Euler:      각도 3개. 사람이 읽기 쉽지만 짐벌락이 있다.
+Quaternion: 축 하나 + 각도 하나(숫자 4개). 짐벌락이 없고 보간이 쉽다.
+\`\`\`
+
+\`\`\`txt
+쿼터니언 곱 = 회전 합성 (순서 중요, 오른쪽이 먼저)
+쿼터니언은 항상 정규화 상태를 유지해야 한다.
+회전 없음 = { w: 1, x: 0, y: 0, z: 0 }
+\`\`\`
+
+\`\`\`txt
+회전은 쿼터니언으로 저장/누적/보간한다.
+Euler는 UI 표시용으로만 그때그때 변환해 쓴다.
+Euler ↔ 쿼터니언 변환 공식은 순서 규약(XYZ/ZXY...)마다 다르다.
+\`\`\`
+
+## 77.10 보간
+
+\`\`\`txt
+위치, 색상 → LERP
+3D 회전    → SLERP (내적이 음수면 부호를 뒤집어 최단 경로로)
+많은 뼈대의 미세한 회전 → NLERP (빠름, 각속도는 불균일)
+\`\`\`
+
 ---
 
-## 79. LERP (선형 보간)
+## 78. LERP (선형 보간)
 
 > **실무 맥락 (Mental Hook) - 부드러운 카메라 추적 및 UI 페이드인:**
 > 화면 속 카메라가 플레이어를 1:1로 칼같이 고정해 쫓아다니면 화면이 끊기거나 덜덜 떨리며 부자연스럽게 보입니다.
-> 이때 플레이어 위치와 현재 카메라 위치 사이의 거리를 구한 뒤, 매 프레임 그 거리의 10%(\`t = 0.1\`)만큼씩만 부드럽게 좁혀오도록 중간값을 계산하는 기법이 바로 **LERP (선형 보간)**입니다.
-> 캐릭터의 부드러운 회전 각도 보간, UI 페이드인/아웃(불투명도를 0에서 1로 시간에 따라 부드럽게 조절), 3D 모델의 관절 애니메이션 연결 등 그래픽스와 애니메이션의 90% 이상이 LERP를 기반으로 동작합니다.
+> 이때 플레이어 위치와 현재 카메라 위치 사이의 중간값을 계산하는 기본 도구가 **LERP(선형 보간)**입니다. 단, 매 프레임 고정된 \`t = 0.1\`을 반복 적용하면 시간에 대한 선형 이동이 아니라 목표에 지수적으로 가까워지는 추적이 되며, 프레임률이 높을수록 더 빨리 따라갑니다.
+> LERP는 위치·색상·불투명도와 여러 애니메이션 값을 보간할 때 매우 널리 사용됩니다. 다만 **회전에는 그대로 쓰면 안 됩니다.** 2D 회전각은 $360^\\circ$ 경계를 고려해야 하고(안 하면 359도에서 1도로 갈 때 반대로 358도를 빙 돌아갑니다), 3D 회전에는 **72.6의 쿼터니언 SLERP**를 써야 합니다.
 
 공식:
 \`\`\`txt
@@ -4128,6 +4897,13 @@ function lerpVec2(a, b, t) {
 }
 \`\`\`
 
+정해진 전체 시간 동안 \`t\`를 0에서 1까지 증가시키는 보간은 프레임률과 무관합니다. 목표를 계속 따라가는 카메라처럼 LERP를 매 프레임 반복하려면 다음처럼 \`dt\`로 보간 계수를 만드는 방법이 유용합니다.
+
+\`\`\`js
+const t = 1 - Math.exp(-followSpeed * dt);
+camera.position = lerpVec2(camera.position, target.position, t);
+\`\`\`
+
 ![LERP 시각화](./images/diagram_075.svg)
 
 ### 🟠 실시간 인터랙티브 시각화 (웹 캔버스)
@@ -4137,7 +4913,7 @@ function lerpVec2(a, b, t) {
 
 ---
 
-## 80. 레이캐스팅 (Ray Casting) 기초
+## 79. 레이캐스팅 (Ray Casting) 기초
 
 레이캐스팅은 시작점(Origin)과 방향(Direction)을 가진 광선(Ray)을 쏘아 공간 속 물체와 충돌하는 지점을 계산하는 기법입니다.
 
@@ -4148,7 +4924,7 @@ P(t) = rayOrigin + rayDir * t  (단, t >= 0)
 
 ![레이캐스팅 시각화](./images/diagram_076.svg)
 
-### 80.1 광선 vs 원 (Ray-vs-Circle) 충돌
+### 79.1 광선 vs 원 (Ray-vs-Circle) 충돌
 광선 공식과 원의 방정식 $(P - C) \\cdot (P - C) = R^2$를 조합하여 2차 방정식을 풀어서 만나는 시간 $t$를 구합니다.
 
 코드:
@@ -4188,9 +4964,9 @@ function raycastCircle(rayOrigin, rayDir, circleCenter, radius) {
 
 ---
 
-## 81. 무게중심 좌표 (Barycentric Coordinates)
+## 80. 무게중심 좌표 (Barycentric Coordinates)
 
-무게중심 좌표는 삼각형 내부의 점 $P$를 삼각형의 세 꼭짓점 $A, B, C$의 가중치 합($u, v, w$)으로 나타내는 시스템입니다.
+무게중심 좌표는 삼각형 내부의 점 $P$를 삼각형의 세 꼭짓점 $A, B, C$의 가중치 합($u, v, w$)으로 나타내는 좌표계입니다.
 
 공식:
 \`\`\`txt
@@ -4198,7 +4974,24 @@ P = u * A + v * B + w * C
 (단, u + v + w = 1 이며 삼각형 내부의 점일 경우 u, v, w >= 0)
 \`\`\`
 
-![무게중심 좌표 시각화](./images/diagram_077.svg)
+![무게중심 좌표와 서브 삼각형의 면적 관계](./images/diagram_077_barycentric_areas.svg)
+
+### 80.1 가중치($u, v, w$)와 맞은편 삼각형 면적의 관계
+
+무게중심 좌표가 직관적으로 와닿지 않는다면 **면적 비율**로 이해하면 가장 쉽습니다. 
+삼각형 $ABC$ 내부의 점 $P$를 꼭짓점들과 연결하면 3개의 서브 삼각형이 만들어집니다. 이때 각 꼭짓점에 곱해지는 가중치($u, v, w$)는 **그 꼭짓점의 '맞은편(대변)'에 있는 서브 삼각형의 면적 비율**과 정확히 일치합니다.
+
+- **$u$ (꼭짓점 $A$의 가중치)**: $A$의 맞은편에 있는 삼각형 $PBC$의 면적 비율
+  $$u = \\frac{\\text{Area}(PBC)}{\\text{Total Area}}$$
+- **$v$ (꼭짓점 $B$의 가중치)**: $B$의 맞은편에 있는 삼각형 $PCA$의 면적 비율
+  $$v = \\frac{\\text{Area}(PCA)}{\\text{Total Area}}$$
+- **$w$ (꼭짓점 $C$의 가중치)**: $C$의 맞은편에 있는 삼각형 $PAB$의 면적 비율
+  $$w = \\frac{\\text{Area}(PAB)}{\\text{Total Area}}$$
+
+삼각형 $PBC$, $PCA$, $PAB$의 면적을 모두 더하면 전체 삼각형 $ABC$의 면적과 같아지므로, 세 가중치의 합은 항상 1이 됩니다:
+$$u + v + w = \\frac{\\text{Area}(PBC) + \\text{Area}(PCA) + \\text{Area}(PAB)}{\\text{Total Area}} = 1$$
+
+만약 점 $P$가 꼭짓점 $A$에 가까워지면 맞은편 삼각형 $PBC$의 면적이 커지므로 $u$는 1에 가까워지고, $v, w$는 0에 수렴합니다. 점 $P$가 삼각형 $ABC$의 물리적 무게중심인 경우에는 세 면적이 동일하므로 $u = v = w = 1/3$이 됩니다.
 
 코드:
 \`\`\`js
@@ -4220,11 +5013,11 @@ function getBarycentric(p, a, b, c) {
 
 > **실무 활용:**
 > * **삼각형 내부 판정:** 점 $P$의 무게중심 좌표 $u, v, w$가 모두 0 이상인지 검사합니다.
-> * **텍스처 보간 (UV Interpolation):** 래스터라이저가 꼭짓점 $A, B, C$의 텍스처 좌표나 색상을 내부 픽셀로 부드럽게 채울 때 세 가중치 $u, v, w$를 가중합하여 결정합니다.
+> * **텍스처 보간 (UV Interpolation):** 래스터라이저는 꼭짓점 $A, B, C$의 텍스처 좌표나 색상을 내부 픽셀로 채울 때 무게중심 가중치를 사용합니다. 단, 원근 투영된 삼각형의 UV는 화면 공간에서 단순 가중합하면 왜곡되므로 **87번의 \`1/w\` 원근 보정 보간**이 필요합니다.
 
 ---
 
-## 82. 법선 행렬 (Normal Matrix)의 비밀
+## 81. 법선 행렬 (Normal Matrix)의 비밀
 
 오브젝트의 3D 정점 위치는 변환 행렬(Model-View)을 곱해 화면에 표시합니다. 하지만 모델에 **비균등 스케일 (Non-uniform Scale, 예: x축으로만 2배 늘리기)**을 적용한 상태에서 표면 법선 벡터(Normal Vector)에 동일한 변환 행렬을 곱하면 법선 벡터가 더 이상 표면에 수직(orthogonal)이지 않게 왜곡됩니다.
 
@@ -4237,16 +5030,46 @@ Normal Matrix = transpose(inverse(Model-View Matrix))
 
 ![법선 행렬 시각화](./images/diagram_078.svg)
 
+### 81.1 법선 행렬 유도 공식 증명 (왜 역행렬의 전치인가?)
+
+수학적으로 왜 전치 역행렬이 필요한지 완벽히 이해해봅시다.
+
+1. **직교성 조건 정의:**
+   원래 표면의 접선 벡터를 $\\vec{T}$, 법선 벡터를 $\\vec{N}$이라고 하면, 이 둘은 수직이므로 내적값은 0입니다. 행렬의 곱셈(열벡터끼리의 내적)식으로 쓰면 다음과 같습니다.
+   $$\\vec{N} \\cdot \\vec{T} = \\vec{N}^T \\vec{T} = 0$$
+
+2. **변환 후의 조건:**
+   정점들과 함께 접선 벡터 $\\vec{T}$가 모델-뷰 변환 행렬 $M$에 의해 $\\vec{T}'$로 변환된다고 합시다 (벡터의 이동 성분 $w=0$이므로 $M$은 $3 \\times 3$ 부분행렬입니다).
+   $$\\vec{T}' = M \\vec{T}$$
+   우리가 구하고자 하는 법선 벡터 변환 행렬을 $G$라고 하면, 변환 후의 법선 벡터는 다음과 같습니다.
+   $$\\vec{N}' = G \\vec{N}$$
+   변환 후에도 법선 $\\vec{N}'$과 접선 $\\vec{T}'$는 여전히 수직을 유지해야 합니다:
+   $$\\vec{N}'^T \\vec{T}' = 0$$
+
+3. **두 식 결합 및 전치 대입:**
+   변환된 식에 정의를 대입해 전개합니다 (행렬 곱의 전치 공식 $(AB)^T = B^T A^T$ 대입):
+   $$(G \\vec{N})^T (M \\vec{T}) = 0$$
+   $$\\vec{N}^T G^T M \\vec{T} = 0$$
+
+4. **행렬 $G$ 도출:**
+   원래 조건이 $\\vec{N}^T \\vec{T} = 0$ 이었으므로, 위 식이 임의의 직교하는 모든 벡터에 대해 성립하려면 중앙의 $G^T M$이 단위 행렬 $I$가 되어 소거되어야 합니다.
+   $$G^T M = I$$
+   $$G^T = M^{-1}$$
+   $$G = (M^{-1})^T$$
+
+따라서 법선 벡터를 찌그러짐 없이 변환하려면, 월드 변환 행렬 $M$의 **역행렬(Inverse)을 구한 뒤 이를 전치(Transpose)**한 행렬 $G$를 곱해 주어야 합니다.
+
 > **실무 활용:**
 > * 비균등 스케일링이 가능한 3D 월드의 셰이더 프로그래밍 시, 표면 법선을 변환할 때 일반 변환 행렬 대신 법선 행렬을 사용해야 광선 연산(디퓨즈, 스펙큘러 조명)이 사실적으로 처리됩니다.
+> * 변환 행렬 $M$이 회전과 균등 스케일로만 이루어져 있다면 기존 $M$의 $3 \\times 3$ 영역을 사용해도 법선의 **방향**은 정확히 유지됩니다. 다만 균등 스케일만큼 길이가 바뀌므로 변환 후 반드시 정규화해야 합니다. 역행렬/전치는 CPU에서 오브젝트당 한 번 계산해 uniform으로 전달하는 것이 일반적이며, 매 정점마다 역행렬을 계산하지 않습니다.
 
 ---
 
-## 83. 베지에 곡선 (Bézier Curve) 맛보기
+## 82. 베지에 곡선 (Bézier Curve) 맛보기
 
 베지에 곡선은 제어점(Control Points)들의 조합을 통해 정교하고 부드러운 곡선을 정의하는 수학적 기법입니다.
 
-### 83.1 3차 베지에 곡선 (Cubic Bézier Curve)
+### 82.1 3차 베지에 곡선 (Cubic Bézier Curve)
 4개의 제어점 $P_0, P_1, P_2, P_3$과 매개변수 $t \\in [0, 1]$로 표현됩니다.
 
 ![3차 베지에 곡선](./images/diagram_079.svg)
@@ -4274,7 +5097,7 @@ function cubicBezier(p0, p1, p2, p3, t) {
 
 ---
 
-## 84. 마지막으로 기억할 큰 그림
+## 83. 여기까지의 중간 정리
 
 \`\`\`txt
 수학은 공식을 외우는 게 아니라,
@@ -4300,7 +5123,1087 @@ function cubicBezier(p0, p1, p2, p3, t) {
 부딪힌 뒤 어떻게 바뀌는가?
 \`\`\`
 
-이 질문에 답하기 위해 이 핸드북의 개념들이 연결됩니다.
+이 질문에 답하기 위해 이 핸드북의 개념들이 연결됩니다. 다음 Part부터는 이 기초를 실제 렌더링 파이프라인, 물리엔진 구조, 게임플레이 알고리즘에 적용합니다. 책 전체의 최종 지도는 106번에서 다시 정리합니다.
+
+---
+
+# Part 11. 실전 그래픽스 파이프라인
+
+이 Part에서는 \`MVP를 곱한다\`에서 멈추지 않고 정점이 실제 화면 픽셀이 되기까지를 연결합니다.
+
+## 84.0 이 Part에서 사용하는 Vec3와 Mat4
+
+뒤 예제에서 이름만 보고 의미를 놓치지 않도록 공통 함수를 먼저 모아둡니다. \`Mat4\`는 열벡터 \`M * v\` 규약을 사용하되, JavaScript 배열은 앞의 3x3 예제처럼 행 우선으로 적습니다.
+
+\`\`\`js
+function add3(a, b) { return { x: a.x+b.x, y: a.y+b.y, z: a.z+b.z }; }
+function sub3(a, b) { return { x: a.x-b.x, y: a.y-b.y, z: a.z-b.z }; }
+function mul3(v, s) { return { x: v.x*s, y: v.y*s, z: v.z*s }; }
+function dot3(a, b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+function cross3(a, b) {
+  return {
+    x: a.y*b.z - a.z*b.y,
+    y: a.z*b.x - a.x*b.z,
+    z: a.x*b.y - a.y*b.x
+  };
+}
+function length3(v) { return Math.hypot(v.x, v.y, v.z); }
+function normalize3(v, eps = 1e-8) {
+  const len = length3(v);
+  return len < eps ? { x:0, y:0, z:0 } : mul3(v, 1/len);
+}
+
+function mat4Multiply(a, b) {
+  const out = new Array(16).fill(0);
+  for (let row=0; row<4; row++) {
+    for (let col=0; col<4; col++) {
+      for (let k=0; k<4; k++) out[row*4+col] += a[row*4+k] * b[k*4+col];
+    }
+  }
+  return out;
+}
+function transformHomogeneous(m, v) {
+  return {
+    x: m[0]*v.x + m[1]*v.y + m[2]*v.z + m[3]*v.w,
+    y: m[4]*v.x + m[5]*v.y + m[6]*v.z + m[7]*v.w,
+    z: m[8]*v.x + m[9]*v.y + m[10]*v.z + m[11]*v.w,
+    w: m[12]*v.x + m[13]*v.y + m[14]*v.z + m[15]*v.w
+  };
+}
+\`\`\`
+
+일반 4x4 역행렬 구현은 길고 실수하기 쉬우므로 실무에서는 검증된 수학 라이브러리를 사용합니다. Picking 예제의 \`invViewProjection\`은 \`inverse(projection * view)\`이며, 역행렬이 존재하지 않으면 picking ray도 만들 수 없습니다.
+
+## 84. 좌표 공간의 전체 여행
+
+![로컬 좌표에서 화면 좌표까지의 전체 흐름](./images/diagram_080_coordinate_spaces.svg)
+
+\`\`\`txt
+Local → World → View → Clip → NDC → Screen
+\`\`\`
+
+| 공간 | 의미 | 만드는 연산 |
+|---|---|---|
+| Local | 모델 파일 안의 자체 좌표 | 원본 정점 |
+| World | 게임 세계에 배치된 좌표 | \`Model * local\` |
+| View | 카메라를 원점으로 본 좌표 | \`View * world\` |
+| Clip | 보이는 범위를 자르기 위한 동차좌표 | \`Projection * view\` |
+| NDC | 원근 분할 후 표준화된 좌표 | \`clip.xyz / clip.w\` |
+| Screen | 실제 픽셀 좌표 | viewport 변환 |
+
+NDC에서 화면 좌표로 옮기는 기본식은 다음과 같습니다. 아래는 화면의 y가 아래로 증가하는 경우입니다.
+
+\`\`\`js
+function ndcToScreen(ndc, width, height) {
+  return {
+    x: (ndc.x * 0.5 + 0.5) * width,
+    y: (1 - (ndc.y * 0.5 + 0.5)) * height
+  };
+}
+\`\`\`
+
+### 84.1 좌표계 규약은 프로젝트의 문법이다
+
+3D API와 엔진마다 다음 선택이 다를 수 있습니다.
+
+- 오른손 좌표계 또는 왼손 좌표계
+- 카메라 전방이 \`-Z\` 또는 \`+Z\`
+- 정점 앞면이 CCW 또는 CW
+- NDC 깊이가 \`-1..1\` 또는 \`0..1\`
+- 행렬 저장이 행 우선 또는 열 우선
+
+공식 하나를 복사하기 전에 **벡터를 어느 쪽에 곱하는지와 좌표계 규약**을 먼저 확인해야 합니다.
+
+### 84.2 화면 좌표를 월드 광선으로 되돌리기
+
+마우스 picking은 화면 좌표를 NDC로 바꾸고, 역 View-Projection 행렬로 near/far 두 점을 월드로 되돌립니다.
+
+\`\`\`js
+function screenToNDC(x, y, width, height) {
+  return {
+    x: 2 * x / width - 1,
+    y: 1 - 2 * y / height
+  };
+}
+
+// transformHomogeneous(invViewProjection, {x, y, z, w})가 있다고 가정
+function makePickingRay(mouse, viewport, invViewProjection) {
+  const ndc = screenToNDC(mouse.x, mouse.y, viewport.width, viewport.height);
+  const near4 = transformHomogeneous(invViewProjection, { x: ndc.x, y: ndc.y, z: -1, w: 1 });
+  const far4  = transformHomogeneous(invViewProjection, { x: ndc.x, y: ndc.y, z:  1, w: 1 });
+  const near = { x: near4.x / near4.w, y: near4.y / near4.w, z: near4.z / near4.w };
+  const far  = { x: far4.x / far4.w,  y: far4.y / far4.w,  z: far4.z / far4.w };
+  return { origin: near, direction: normalize3(sub3(far, near)) };
+}
+\`\`\`
+
+> 위 \`z=-1..1\`은 WebGL 계열 규약 예시입니다. 사용하는 API의 NDC 깊이 범위를 확인해야 합니다.
+
+## 85. 기저, 행렬식, 역행렬
+
+![기저 변환과 행렬식의 의미](./images/diagram_089_basis_determinant.svg)
+
+기저(Basis)는 공간을 설명하는 기준축 묶음입니다. 2D에서는 \`right\`, \`up\`, 3D에서는 여기에 \`forward\`가 더해집니다.
+
+\`\`\`txt
+worldVector = right * local.x + up * local.y + forward * local.z
+\`\`\`
+
+행렬의 각 열에 새 기저축을 넣으면 로컬 성분을 월드 벡터로 바꿀 수 있습니다. 직교 정규 기저라면 반대 변환은 각 축과 내적하면 됩니다.
+
+\`\`\`js
+function worldToBasis2D(v, right, up) {
+  return { x: dot(v, right), y: dot(v, up) };
+}
+\`\`\`
+
+### 85.1 행렬식 determinant의 기하학적 의미
+
+2D 행렬의 행렬식은 단위 정사각형의 **부호 있는 넓이 배율**입니다.
+
+$$\\det\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}=ad-bc$$
+
+\`\`\`txt
+|det| > 1 : 넓이가 커짐
+0 < |det| < 1 : 넓이가 작아짐
+det < 0 : 좌우가 뒤집힘
+det = 0 : 한 축이 찌그러져 차원이 사라짐 → 역행렬 없음
+\`\`\`
+
+\`\`\`js
+function inverseMat2(m) {
+  const det = m.a * m.d - m.b * m.c;
+  if (Math.abs(det) < 1e-8) return null;
+  const s = 1 / det;
+  return { a: m.d * s, b: -m.b * s, c: -m.c * s, d: m.a * s };
+}
+\`\`\`
+
+위 코드의 필드 배치는 다음 행렬과 대응합니다.
+
+$$M=\\begin{bmatrix}m.a&m.b\\\\m.c&m.d\\end{bmatrix}$$
+
+역행렬은 변환을 되돌립니다. 합성 변환은 순서도 반대로 풀립니다.
+
+$$ (TRS)^{-1}=S^{-1}R^{-1}T^{-1} $$
+
+## 86. 클리핑에서 픽셀까지
+
+![GPU 렌더링 파이프라인](./images/diagram_081_render_pipeline.svg)
+
+1. **Vertex Shader:** 각 정점을 clip 공간으로 변환합니다.
+2. **Clipping:** 절두체 밖의 삼각형을 자릅니다. clip 공간에서는 \`-w ≤ x,y,z ≤ w\` 같은 조건을 사용합니다.
+3. **Perspective Divide:** \`xyz / w\`로 NDC를 만듭니다.
+4. **Viewport:** NDC를 화면 픽셀로 바꿉니다.
+5. **Rasterization:** 삼각형이 덮는 픽셀 후보(fragment)를 만듭니다.
+6. **Fragment Shader:** 각 fragment의 색을 계산합니다.
+7. **Tests/Blend:** depth, stencil, blending을 거쳐 framebuffer에 기록합니다.
+
+정점(vertex)은 삼각형의 꼭짓점 데이터이고, fragment는 래스터화 결과 생긴 **픽셀 후보**입니다. fragment shader가 색을 계산해도 depth/stencil test에서 탈락하면 최종 픽셀로 기록되지 않습니다. Clipping은 절두체 경계에서 삼각형을 잘라 새 정점을 만드는 과정이고, culling은 앞면/뒷면 같은 규칙으로 삼각형 전체를 버리는 과정입니다.
+
+### 86.1 깊이 버퍼와 가림
+
+Depth test는 각 픽셀에서 지금까지 가장 가까운 깊이를 저장합니다. 불투명 물체는 보통 앞에서 뒤 순서로 그리면 early-Z 최적화에 유리합니다. 반투명 물체는 깊이 쓰기를 끄고 뒤에서 앞으로 정렬하는 경우가 많습니다.
+
+### 86.2 알파 블렌딩
+
+Straight alpha의 대표 합성식:
+
+$$C_{out}=C_s\\alpha_s+C_d(1-\\alpha_s)$$
+
+Premultiplied alpha에서는 소스 RGB에 이미 alpha가 곱해져 있습니다.
+
+$$C_{out}=C_s+C_d(1-\\alpha_s)$$
+
+텍스처 제작 방식과 blend state가 서로 다르면 검은 테두리나 밝은 번짐이 생깁니다.
+
+여러 반투명 표면의 결과는 그리는 순서에 따라 달라집니다. 전형적인 실시간 렌더링은 불투명 물체를 먼저 그리고, 반투명 물체는 depth test는 유지하되 depth write를 끈 뒤 대략 뒤에서 앞으로 정렬합니다. 출력 alpha도 같은 방식으로 합성합니다.
+
+$$\\alpha_{out}=\\alpha_s+\\alpha_d(1-\\alpha_s)$$
+
+## 87. 원근 보정 보간
+
+화면 공간의 무게중심 좌표로 UV를 그대로 보간하면 원근감이 있는 삼각형에서 텍스처가 휘어 보입니다. 투영 전에 선형이었던 값은 perspective divide 뒤에는 선형이 아니기 때문입니다.
+
+![단순 보간과 원근 보정 보간](./images/diagram_082_perspective_interpolation.svg)
+
+정점별 속성 \`a\`와 clip 좌표의 \`w\`가 있을 때:
+
+$$a=\\frac{\\lambda_0(a_0/w_0)+\\lambda_1(a_1/w_1)+\\lambda_2(a_2/w_2)}{\\lambda_0(1/w_0)+\\lambda_1(1/w_1)+\\lambda_2(1/w_2)}$$
+
+숫자로 보면 원리가 선명합니다. 두 정점의 속성이 \`a₀=0\`, \`a₁=1\`이고 깊이 관련 값이 \`w₀=1\`, \`w₁=4\`라고 합시다. 화면 중간 \`λ₀=λ₁=0.5\`에서 단순 보간은 \`0.5\`지만 원근 보정 결과는 다음과 같습니다.
+
+$$a=\\frac{0.5(0/1)+0.5(1/4)}{0.5(1/1)+0.5(1/4)}=0.2$$
+
+즉, 화면상의 중간점이 3D 공간 속성의 중간값과 같지는 않습니다. 기억할 순서는 \`속성/w 보간 → 1/w 보간 → 둘을 나눠 복원\`입니다.
+
+\`\`\`js
+function perspectiveInterpolate(lambda, values, clipW) {
+  let numerator = 0;
+  let denominator = 0;
+  for (let i = 0; i < 3; i++) {
+    numerator += lambda[i] * values[i] / clipW[i];
+    denominator += lambda[i] / clipW[i];
+  }
+  return numerator / denominator;
+}
+\`\`\`
+
+GPU는 일반 varying을 기본적으로 이 방식으로 보간합니다. GLSL의 \`noperspective\` 같은 한정자를 사용하면 화면 공간 선형 보간을 명시할 수 있습니다.
+
+## 88. 조명 모델의 최소 골격
+
+조명 계산은 반드시 선형 색 공간에서 수행하고, 방향 벡터는 정규화합니다.
+
+![조명 계산에 사용하는 N, L, V, H 벡터](./images/diagram_090_lighting_vectors.svg)
+
+이 절에서는 모든 방향을 **표면점 P에서 바깥으로 향하게** 정의합니다.
+
+\`\`\`txt
+N: 표면에서 바깥으로 향하는 법선
+L: 표면 P에서 광원으로 향하는 방향
+V: 표면 P에서 카메라로 향하는 방향
+H: L과 V 사이의 중간 방향
+\`\`\`
+
+### 88.1 Lambert diffuse
+
+$$diffuse=\\max(N\\cdot L,0)$$
+
+### 88.2 Blinn-Phong specular
+
+빛 방향 \`L\`과 카메라 방향 \`V\`의 중간 방향 $H=normalize(L+V)$를 사용합니다.
+
+$$specular=\\max(N\\cdot H,0)^{shininess}$$
+
+\`\`\`glsl
+vec3 N = normalize(vNormal);
+vec3 L = normalize(lightPos - vWorldPos);
+vec3 V = normalize(cameraPos - vWorldPos);
+vec3 H = normalize(L + V);
+
+float diffuse = max(dot(N, L), 0.0);
+float specular = diffuse > 0.0
+  ? pow(max(dot(N, H), 0.0), shininess)
+  : 0.0;
+vec3 linearColor = ambient + albedo * lightColor * diffuse
+                 + specularColor * lightColor * specular;
+\`\`\`
+
+거리 감쇠는 보통 역제곱 관계에서 출발합니다.
+
+$$attenuation \\propto \\frac{1}{distance^2}$$
+
+\`albedo\`는 물체의 기본 반사색, \`lightColor\`는 광원의 색과 세기, \`shininess\`는 하이라이트가 얼마나 좁고 날카로운지를 나타냅니다. \`ambient\`는 여기서는 간접광을 매우 단순하게 흉내 내는 상수입니다. 역제곱식은 거리 0에서 발산하므로 코드에서는 광원 반경이나 최소 거리를 둡니다.
+
+\`\`\`glsl
+float safeDistance = max(distance(lightPos, vWorldPos), lightRadius);
+float attenuation = 1.0 / (safeDistance * safeDistance);
+linearColor *= attenuation;
+\`\`\`
+
+PBR은 여기서 에너지 보존, Fresnel, 미세면 분포, metallic/roughness를 더 체계적으로 모델링한 다음 단계입니다.
+
+## 89. 색 공간과 HDR
+
+![sRGB 입력에서 화면 출력까지](./images/diagram_083_color_pipeline.svg)
+
+대부분의 일반 색 텍스처는 sRGB로 저장되지만 조명 계산은 선형 공간에서 해야 합니다.
+
+\`\`\`txt
+sRGB 텍스처 → 선형화 → 조명 계산 → tone mapping → sRGB 인코딩 → 화면
+\`\`\`
+
+정확한 sRGB 구간별 변환:
+
+\`\`\`js
+function srgbToLinear(c) {
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+function linearToSrgb(c) {
+  c = Math.max(c, 0);
+  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1/2.4) - 0.055;
+}
+\`\`\`
+
+\`albedo\`, 일반 컬러 이미지처럼 사람이 보는 색은 sRGB 디코딩 대상입니다. normal, roughness, metallic, depth처럼 수치 자체가 데이터인 텍스처는 디코딩하면 안 됩니다. 엔진이나 GPU가 sRGB 텍스처와 framebuffer 변환을 자동 처리할 수 있으므로, 수동 변환과 중복 적용하지 않도록 API 설정을 확인해야 합니다.
+
+HDR에서는 조명 결과가 1보다 클 수 있습니다. Tone mapping은 넓은 밝기 범위를 화면 범위로 압축합니다.
+
+\`\`\`js
+function reinhardToneMap(x) { return x / (1 + x); }
+\`\`\`
+
+## 90. 텍스처 샘플링과 에일리어싱
+
+![UV, Nearest, Bilinear, Mipmap 비교](./images/diagram_091_texture_sampling.svg)
+
+텍스처의 한 칸은 **texel**, 화면의 한 칸은 **pixel**입니다. UV는 보통 왼쪽 아래 또는 왼쪽 위를 \`(0,0)\`, 반대 모서리를 \`(1,1)\`로 두는 정규화 좌표이며 API와 이미지 로더에 따라 v축 방향이 다를 수 있습니다.
+
+- **Nearest:** 가장 가까운 texel 하나. 픽셀 아트에 적합합니다.
+- **Bilinear:** 주변 4개 texel을 보간합니다.
+- **Mipmap:** 멀리서 작아진 텍스처를 미리 축소한 단계들입니다.
+- **Trilinear:** 인접 mip 단계까지 보간합니다.
+- **Anisotropic:** 비스듬히 본 표면의 방향성 있는 축소를 개선합니다.
+- **Wrap/Repeat/Clamp:** UV가 \`0..1\` 밖으로 나갔을 때의 처리입니다.
+
+화면 픽셀 하나가 텍스처의 많은 texel을 덮을 때 한 점만 고르면 고주파 무늬가 깜빡이는 aliasing이 생깁니다. Mipmap은 픽셀의 footprint에 맞는 저주파 이미지를 선택해 이를 줄입니다.
+
+Bilinear는 주변 네 texel을 가로로 두 번, 세로로 한 번 LERP합니다.
+
+\`\`\`js
+function bilinear(c00, c10, c01, c11, tx, ty) {
+  const top = lerp(c00, c10, tx);
+  const bottom = lerp(c01, c11, tx);
+  return lerp(top, bottom, ty);
+}
+\`\`\`
+
+예를 들어 네 값이 \`0, 10, 20, 30\`이고 \`tx=ty=0.5\`라면 위쪽 \`5\`, 아래쪽 \`25\`, 최종값은 \`15\`입니다. 텍스처가 작게 보이는 minification에는 mipmap이 중요하고, 크게 보이는 magnification에는 nearest/bilinear 차이가 주로 보입니다.
+
+## 91. 장면 그래프와 계층 변환
+
+![부모와 자식의 계층 변환](./images/diagram_092_scene_graph.svg)
+
+자식의 월드 변환은 부모 월드 변환 뒤에 자신의 로컬 변환을 적용한 결과입니다.
+
+$$M_{childWorld}=M_{parentWorld}M_{childLocal}$$
+
+\`\`\`js
+function updateWorldTransform(node, parentWorld) {
+  node.worldMatrix = parentWorld
+    ? mat4Multiply(parentWorld, node.localMatrix)
+    : node.localMatrix;
+
+  for (const child of node.children) {
+    updateWorldTransform(child, node.worldMatrix);
+  }
+}
+\`\`\`
+
+\`\`\`txt
+캐릭터 몸통
+├─ 팔
+│  └─ 손
+│     └─ 무기
+└─ 머리
+\`\`\`
+
+부모가 움직이면 모든 자식의 월드 변환이 바뀝니다. 실무에서는 local이 바뀐 노드와 그 자손에 \`dirty=true\`, 즉 **다시 계산이 필요하다는 표시**를 남겨 필요한 행렬만 갱신합니다. 비균등 스케일이 회전된 자식과 결합되면 shear가 생길 수 있으므로 TRS 분해가 항상 깔끔하게 되지는 않습니다.
+
+---
+
+# Part 12. 실전 물리엔진으로 가는 다리
+
+## 92. 고정 시간 스텝 게임 루프
+
+![렌더 프레임과 고정 물리 스텝](./images/diagram_084_fixed_timestep.svg)
+
+렌더링은 모니터와 부하에 따라 가변적이지만 물리는 일정한 시간 간격으로 계산하는 편이 안정적입니다.
+
+\`\`\`js
+const fixedDt = 1 / 60;
+let accumulator = 0;
+let previousTime = performance.now() / 1000;
+
+function frame(nowMs) {
+  const now = nowMs / 1000;
+  const frameTime = Math.min(now - previousTime, 0.25);
+  previousTime = now;
+  accumulator += frameTime;
+
+  while (accumulator >= fixedDt) {
+    savePreviousPhysicsState();
+    physicsUpdate(fixedDt);
+    accumulator -= fixedDt;
+  }
+
+  const alpha = accumulator / fixedDt;
+  renderInterpolated(alpha);
+  requestAnimationFrame(frame);
+}
+\`\`\`
+
+\`frameTime\`을 제한하는 이유는 창이 멈췄다가 돌아왔을 때 수백 번의 물리 업데이트가 몰리는 spiral of death를 줄이기 위해서입니다. 입력은 타임스탬프 또는 고정 스텝 단위로 소비해야 재현성이 좋아집니다.
+
+### 92.1 \`alpha\`: 남은 시간을 화면에서만 메우기
+
+물리는 \`fixedDt\` 단위로만 전진하므로, 렌더링 시점은 대개 두 물리 스텝 **사이**에 걸칩니다. \`accumulator\`에 남은 자투리 시간의 비율이 \`alpha\`이고, 이 값으로 **이전 물리 상태와 현재 물리 상태를 LERP해서 그립니다.**
+
+\`\`\`txt
+이전 물리 위치 = 10, 현재 물리 위치 = 20, alpha = 0.25
+→ 화면에 그리는 위치 = lerp(10, 20, 0.25) = 12.5
+\`\`\`
+
+핵심은 **물리 상태 자체를 12.5로 바꾸지 않는다**는 것입니다. 시뮬레이션은 여전히 20에 있고, 화면에만 보간해서 그립니다. 이 처리를 빼면 물리 스텝과 렌더 프레임의 주기가 어긋나면서 **부드럽게 움직여야 할 물체가 미세하게 떨려 보입니다.**
+
+## 93. Broad Phase: 충돌 후보 줄이기
+
+물체가 $N$개일 때 모든 쌍을 검사하면 비교 수는 대략 $N^2/2$입니다. Broad Phase는 멀리 떨어진 물체 쌍을 먼저 제거하고 Narrow Phase에 실제 도형 검사를 맡깁니다.
+
+![Broad Phase와 Narrow Phase](./images/diagram_085_broad_phase.svg)
+
+대표 구조:
+
+- 균일 Grid/Spatial Hash: 크기가 비슷한 2D 오브젝트가 많은 게임
+- Sweep and Prune: 축 투영 구간의 정렬을 활용
+- Quadtree/Octree: 공간을 재귀 분할
+- BVH/Dynamic AABB Tree: 크기가 다양한 동적 물체
+
+간단한 spatial hash:
+
+\`\`\`js
+function cellKey(x, y) { return \`\${x},\${y}\`; }
+
+function buildSpatialHash(bodies, cellSize) {
+  const grid = new Map();
+  for (const body of bodies) {
+    const minX = Math.floor(body.aabb.min.x / cellSize);
+    const maxX = Math.floor(body.aabb.max.x / cellSize);
+    const minY = Math.floor(body.aabb.min.y / cellSize);
+    const maxY = Math.floor(body.aabb.max.y / cellSize);
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const key = cellKey(x, y);
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push(body);
+      }
+    }
+  }
+  return grid;
+}
+\`\`\`
+
+한 쌍이 여러 셀에 함께 들어갈 수 있으므로 body id를 정렬한 pair key로 중복을 제거해야 합니다.
+
+\`\`\`js
+function collectCandidatePairs(grid) {
+  const seen = new Set();
+  const pairs = [];
+  for (const bodies of grid.values()) {
+    for (let i=0; i<bodies.length; i++) {
+      for (let j=i+1; j<bodies.length; j++) {
+        const a = bodies[i];
+        const b = bodies[j];
+        if (a.id === b.id) continue;
+        const low = Math.min(a.id, b.id);
+        const high = Math.max(a.id, b.id);
+        const key = \`\${low}:\${high}\`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        pairs.push([a, b]);
+      }
+    }
+  }
+  return pairs;
+}
+\`\`\`
+
+실제 엔진은 여기서 같은 팀, collision layer, 둘 다 고정 물체인 쌍 등을 filter로 제거한 뒤 Narrow Phase에 넘깁니다.
+
+## 94. CCD: 빠른 물체가 벽을 통과할 때
+
+이산 충돌 검사는 프레임의 시작과 끝만 봅니다. 총알이 한 스텝에 벽 두께보다 멀리 이동하면 양쪽 상태 모두 충돌이 아니어서 tunneling이 생깁니다.
+
+![이산 충돌과 연속 충돌 검출](./images/diagram_086_ccd.svg)
+
+### 94.1 Swept AABB의 감각
+
+상대속도로 움직이는 박스가 각 축에서 언제 들어오고 나가는지 계산합니다.
+
+\`\`\`js
+function sweptAABB(moving, velocity, target, dt) {
+  // 움직이지 않는 축에서 두 구간이 떨어져 있으면 앞으로도 만날 수 없다.
+  if (velocity.x === 0 &&
+      (moving.max.x < target.min.x || moving.min.x > target.max.x)) return null;
+  if (velocity.y === 0 &&
+      (moving.max.y < target.min.y || moving.min.y > target.max.y)) return null;
+
+  const invEntryX = velocity.x > 0
+    ? target.min.x - moving.max.x : target.max.x - moving.min.x;
+  const invExitX = velocity.x > 0
+    ? target.max.x - moving.min.x : target.min.x - moving.max.x;
+  const invEntryY = velocity.y > 0
+    ? target.min.y - moving.max.y : target.max.y - moving.min.y;
+  const invExitY = velocity.y > 0
+    ? target.max.y - moving.min.y : target.min.y - moving.max.y;
+
+  const entryX = velocity.x === 0 ? -Infinity : invEntryX / (velocity.x * dt);
+  const exitX  = velocity.x === 0 ?  Infinity : invExitX  / (velocity.x * dt);
+  const entryY = velocity.y === 0 ? -Infinity : invEntryY / (velocity.y * dt);
+  const exitY  = velocity.y === 0 ?  Infinity : invExitY  / (velocity.y * dt);
+  const entryTime = Math.max(entryX, entryY);
+  const exitTime = Math.min(exitX, exitY);
+
+  if (entryTime > exitTime || entryTime < 0 || entryTime > 1) return null;
+  const normal = entryX > entryY
+    ? { x: velocity.x > 0 ? -1 : 1, y: 0 }
+    : { x: 0, y: velocity.y > 0 ? -1 : 1 };
+  return { time: entryTime, normal };
+}
+\`\`\`
+
+반환되는 \`time\`은 초가 아니라 **현재 스텝 안의 비율 \`0..1\`**입니다. 위 함수는 회전하지 않는 moving AABB와 정지 target을 가정합니다. 두 물체가 모두 움직이면 \`velocityA - velocityB\`라는 상대속도를 사용해야 하며, 처음부터 겹쳐 있으면 기존 manifold로 먼저 해결해야 합니다.
+
+\`\`\`js
+function moveWithCCD(body, target, dt) {
+  const hit = sweptAABB(body.aabb, body.velocity, target.aabb, dt);
+  if (!hit) {
+    body.position.x += body.velocity.x * dt;
+    body.position.y += body.velocity.y * dt;
+    return;
+  }
+
+  // 충돌 직전까지 이동
+  body.position.x += body.velocity.x * dt * hit.time;
+  body.position.y += body.velocity.y * dt * hit.time;
+
+  // sweptAABB의 normal은 벽에서 물체를 향하는 방향이므로
+  // 27.1 bounceVelocity의 규약(표면 → 물체)과 그대로 맞는다.
+  body.velocity = bounceVelocity(body.velocity, hit.normal, body.restitution);
+
+  // 단순 입문 버전: 남은 시간을 새 속도로 이동
+  const remain = dt * (1 - hit.time);
+  body.position.x += body.velocity.x * remain;
+  body.position.y += body.velocity.y * remain;
+}
+\`\`\`
+
+남은 시간 동안 또 다른 벽과 충돌할 수 있으므로 완전한 CCD는 작은 반복 횟수를 두고 가장 이른 TOI를 계속 찾습니다.
+
+실전에서는 모든 물체에 CCD를 켜기보다 빠르고 작은 물체에만 사용하고, swept broad-phase AABB로 후보를 먼저 줄입니다.
+
+## 95. Ray와 기본 도형의 교차
+
+![Ray와 Plane, AABB, Triangle의 교차](./images/diagram_093_ray_intersections.svg)
+
+세 예제 모두 광선을 $P(t)=O+tD$로 표현합니다. \`D\`가 단위 벡터이면 \`t\`는 월드 거리와 같고, 아니면 단순 매개변수입니다. 호출부를 단순하게 만들기 위해 실제 엔진은 보통 결과를 같은 형태로 반환합니다.
+
+\`\`\`js
+// { t, point, normal, ...추가정보 } 또는 충돌이 없으면 null
+function pointOnRay(origin, dir, t) {
+  return add3(origin, mul3(dir, t));
+}
+\`\`\`
+
+### 95.1 Ray vs Plane
+
+평면이 점 $P_0$와 단위 법선 $N$으로 주어질 때:
+
+$$t=\\frac{(P_0-O)\\cdot N}{D\\cdot N}$$
+
+\`\`\`js
+function raycastPlane(origin, dir, planePoint, normal, epsilon = 1e-8) {
+  const denom = dot3(dir, normal);
+  if (Math.abs(denom) < epsilon) return null;
+  const t = dot3(sub3(planePoint, origin), normal) / denom;
+  return t >= 0 ? t : null;
+}
+\`\`\`
+
+\`denom\`이 0에 가까우면 광선과 평면이 거의 평행합니다. 양면 평면이라면 위 코드처럼 부호와 무관하게 검사하고, 앞면만 맞히려면 \`denom\`의 부호로 뒷면을 제외합니다.
+
+### 95.2 Ray vs AABB: slab method
+
+광선이 x, y, z축의 두 평면 사이에 머무는 \`t\` 구간을 교차합니다.
+
+\`\`\`js
+function raycastAABB(origin, dir, box) {
+  let tMin = -Infinity;
+  let tMax = Infinity;
+  for (const axis of ['x', 'y', 'z']) {
+    if (Math.abs(dir[axis]) < 1e-8) {
+      if (origin[axis] < box.min[axis] || origin[axis] > box.max[axis]) return null;
+      continue;
+    }
+    let t1 = (box.min[axis] - origin[axis]) / dir[axis];
+    let t2 = (box.max[axis] - origin[axis]) / dir[axis];
+    if (t1 > t2) [t1, t2] = [t2, t1];
+    tMin = Math.max(tMin, t1);
+    tMax = Math.min(tMax, t2);
+    if (tMin > tMax) return null;
+  }
+  if (tMax < 0) return null;
+  return Math.max(tMin, 0);
+}
+\`\`\`
+
+### 95.3 Ray vs Triangle
+
+Möller–Trumbore 알고리즘은 평면 교차와 무게중심 좌표를 한 번에 구합니다.
+
+\`\`\`js
+function raycastTriangle(o, d, a, b, c, eps = 1e-8) {
+  const e1 = sub3(b, a);
+  const e2 = sub3(c, a);
+  const p = cross3(d, e2);
+  const det = dot3(e1, p);
+  if (Math.abs(det) < eps) return null;
+  const invDet = 1 / det;
+  const s = sub3(o, a);
+  const u = dot3(s, p) * invDet;
+  if (u < 0 || u > 1) return null;
+  const q = cross3(s, e1);
+  const v = dot3(d, q) * invDet;
+  if (v < 0 || u + v > 1) return null;
+  const t = dot3(e2, q) * invDet;
+  return t >= 0 ? { t, u, v, w: 1 - u - v } : null;
+}
+\`\`\`
+
+## 96. 접촉점 manifold
+
+normal과 penetration만으로는 박스가 바닥에 안정적으로 서기 어렵습니다. 박스 모서리 하나만 반응하면 불필요한 회전이 생길 수 있기 때문입니다.
+
+\`\`\`txt
+collision manifold = normal + penetration + contact points[]
+\`\`\`
+
+![Reference face와 Incident face를 잘라 접촉점 만들기](./images/diagram_094_contact_manifold.svg)
+
+다각형 접촉점 생성의 대표 흐름:
+
+1. 충돌 normal과 가장 잘 맞는 reference face를 고릅니다.
+2. 반대 도형에서 normal을 가장 향하는 incident face를 고릅니다.
+3. incident 선분을 reference face의 양옆 평면으로 clipping합니다.
+4. reference 면 뒤에 남은 점 최대 2개를 접촉점으로 사용합니다.
+
+각 접촉점마다 \`ra\`, \`rb\`가 다르므로 70.2의 회전 임펄스 분모도 달라집니다.
+
+선분을 한 평면의 안쪽으로 자르는 최소 함수는 다음과 같습니다. 평면은 \`dot(normal, point) = offset\`이고, \`dot(normal, point) <= offset\`을 안쪽으로 정의합니다.
+
+\`\`\`js
+function clipSegmentToLine(points, normal, offset) {
+  const out = [];
+  const d0 = dot(points[0], normal) - offset;
+  const d1 = dot(points[1], normal) - offset;
+
+  if (d0 <= 0) out.push(points[0]);
+  if (d1 <= 0) out.push(points[1]);
+
+  if (d0 * d1 < 0) {
+    const t = d0 / (d0 - d1);
+    out.push({
+      x: points[0].x + (points[1].x - points[0].x) * t,
+      y: points[0].y + (points[1].y - points[0].y) * t
+    });
+  }
+  return out;
+}
+\`\`\`
+
+이 함수를 reference face의 왼쪽과 오른쪽 side plane에 차례로 적용하고, 마지막으로 reference 면 뒤에 남은 점만 고르면 접촉점 최대 두 개가 됩니다. 한 점이면 모서리 접촉, 두 점이면 면 접촉에 가깝습니다.
+
+## 97. 반복 solver와 안정화
+
+실제 장면에는 여러 접촉과 관절이 서로 연결됩니다. 한 번씩만 임펄스를 적용하면 앞에서 해결한 충돌이 뒤 제약에 의해 다시 깨집니다. 그래서 모든 제약을 여러 번 순회하는 Sequential Impulse 방식을 사용합니다.
+
+\`\`\`js
+function solveWorld(world, dt, iterations = 10) {
+  const constraints = buildContactConstraints(world, dt);
+  warmStart(constraints);
+  for (let i = 0; i < iterations; i++) {
+    for (const c of constraints) solveNormalImpulse(c);
+    for (const c of constraints) solveFrictionImpulse(c);
+  }
+}
+\`\`\`
+
+아래는 회전을 생략한 **한 접촉점의 누적 법선 임펄스** 핵심입니다. \`c.normalImpulse\`는 프레임 시작 시 지난 값을 warm start에 사용하고, 각 반복에서 새 임펄스를 더하되 총합이 음수가 되지 않게 합니다. 음수 법선 임펄스는 두 물체를 서로 끌어당기는 힘이 되기 때문입니다.
+
+\`\`\`js
+function solveNormalContact(c) {
+  const rv = sub(c.b.velocity, c.a.velocity);
+  const vn = dot(rv, c.normal);
+  const invMassSum = c.a.invMass + c.b.invMass;
+  if (invMassSum === 0) return;
+
+  // bias는 작은 침투를 다음 스텝들에 걸쳐 줄이는 목표 분리속도
+  const lambda = -(vn + c.bias) / invMassSum;
+  const oldImpulse = c.normalImpulse;
+  c.normalImpulse = Math.max(oldImpulse + lambda, 0);
+  const deltaImpulse = c.normalImpulse - oldImpulse;
+  const impulse = mul(c.normal, deltaImpulse);
+
+  c.a.velocity = sub(c.a.velocity, mul(impulse, c.a.invMass));
+  c.b.velocity = add(c.b.velocity, mul(impulse, c.b.invMass));
+}
+
+function makeBaumgarteBias(penetration, dt, beta = 0.2, slop = 0.01) {
+  // solver 식의 부호 규약에 맞춰 음수 목표속도로 둔다.
+  return -beta / dt * Math.max(penetration - slop, 0);
+}
+\`\`\`
+
+예를 들어 침투가 \`0.06\`, slop이 \`0.01\`, \`dt=1/60\`, \`beta=0.2\`라면 bias의 크기는 \`0.6\`입니다. 한 번에 5cm를 텔레포트시키지 않고 여러 스텝에 걸쳐 겹침을 줄입니다. 회전까지 포함하려면 분모를 70.2의 유효질량 공식으로 바꿉니다.
+
+- **Accumulated impulse:** 반복 중 누적 임펄스가 음수가 되지 않게 제한합니다.
+- **Warm starting:** 지난 스텝의 임펄스를 초기값으로 재사용합니다.
+- **Baumgarte bias:** 침투 깊이 일부를 속도 보정값으로 바꿉니다.
+- **Restitution threshold:** 아주 느린 충돌은 튀기지 않아 바닥 떨림을 줄입니다.
+- **Static/Dynamic friction:** 멈춰 있을 때와 미끄러질 때의 마찰 한계를 구분합니다.
+
+## 98. 충돌 도형 확장
+
+실무에서 자주 쓰는 도형:
+
+- Capsule: 캐릭터가 계단과 모서리를 부드럽게 통과하기 좋음
+- Convex Polygon: SAT 또는 support mapping
+- Segment/Edge: 지형과 센서
+- Convex Hull: 복잡한 메시를 볼록 조각으로 근사
+
+복잡한 오목 도형은 보통 여러 볼록 도형으로 분해합니다. 임의의 볼록 도형에는 GJK로 거리/교차를 찾고 EPA로 침투 normal과 깊이를 구할 수 있지만, 입문 구현에서는 SAT와 캡슐부터 익히는 편이 좋습니다.
+
+### 98.1 Capsule은 선분에 반지름을 준 도형이다
+
+![Capsule과 선분 위의 가장 가까운 점](./images/diagram_095_capsule.svg)
+
+\`\`\`js
+function closestPointOnSegment(p, a, b) {
+  const ab = sub(b, a);
+  const denom = dot(ab, ab);
+  if (denom < 1e-8) return { ...a };
+  const t = Math.max(0, Math.min(1, dot(sub(p, a), ab) / denom));
+  return add(a, mul(ab, t));
+}
+
+function intersectsCircleCapsule(circle, capsule) {
+  const closest = closestPointOnSegment(circle.position, capsule.a, capsule.b);
+  const combinedRadius = circle.radius + capsule.radius;
+  const delta = sub(circle.position, closest);
+  return dot(delta, delta) <= combinedRadius * combinedRadius;
+}
+\`\`\`
+
+캡슐의 둥근 위아래는 작은 턱과 모서리에 걸리는 현상을 줄여 캐릭터 컨트롤러에 자주 사용됩니다. GJK/EPA는 임의의 볼록 도형으로 확장할 때 배우는 다음 단계이며 이 책에서는 개념 소개까지만 다룹니다.
+
+---
+
+# Part 13. 게임플레이 수학과 수치 안정성
+
+## 99. 보간 도구상자
+
+\`\`\`js
+function clamp01(t) { return Math.max(0, Math.min(1, t)); }
+function inverseLerp(a, b, value) {
+  return a === b ? 0 : (value - a) / (b - a);
+}
+function remap(inA, inB, outA, outB, value) {
+  return lerp(outA, outB, inverseLerp(inA, inB, value));
+}
+function smoothstep(t) {
+  t = clamp01(t);
+  return t * t * (3 - 2 * t);
+}
+\`\`\`
+
+위 \`inverseLerp\`는 clamp하지 않으므로 범위 밖 값은 extrapolation됩니다. 예를 들어 \`inverseLerp(0, 10, 20)\`은 \`2\`입니다. 게이지처럼 반드시 \`0..1\`이어야 하면 \`clamp01(inverseLerp(...))\`를 사용합니다.
+
+\`\`\`js
+// 체력 25/100을 UI 막대 폭 0~300px로 바꾸면 75px
+const healthT = clamp01(inverseLerp(0, 100, 25));
+const barWidth = lerp(0, 300, healthT);
+\`\`\`
+
+### 99.1 각도의 최단 경로
+
+\`\`\`js
+function shortestAngleDelta(from, to) {
+  let d = (to - from) % (Math.PI * 2);
+  if (d > Math.PI) d -= Math.PI * 2;
+  if (d < -Math.PI) d += Math.PI * 2;
+  return d;
+}
+
+function lerpAngle(from, to, t) {
+  return from + shortestAngleDelta(from, to) * t;
+}
+\`\`\`
+
+## 100. 스프링 카메라와 임계 감쇠
+
+![부족 감쇠, 임계 감쇠, 과감쇠 비교](./images/diagram_096_spring_damping.svg)
+
+LERP 추적은 간단하지만 실제 속도 상태가 없어 자연스러운 관성이 제한됩니다. 스프링은 위치 오차와 속도에 따라 가속합니다.
+
+$$a=\\omega^2(target-x)-2\\zeta\\omega v$$
+
+이것은 **23.5의 후크의 법칙($F = -kx - cv$)과 완전히 같은 스프링**입니다. 양변을 질량으로 나눠 가속도 형태로 바꾸고, 튜닝하기 쉬운 두 값으로 파라미터만 갈아끼운 것입니다.
+
+\`\`\`txt
+ω (각진동수)  = sqrt(k / m)    "얼마나 빠르게 반응하는가"
+ζ (감쇠비)    = c / (2·sqrt(k·m))  "얼마나 흔들리는가"
+\`\`\`
+
+$k$와 $c$는 질량에 따라 체감이 달라져 손으로 맞추기 어렵지만, $\\omega$와 $\\zeta$는 **의미가 직관적이라 디자이너가 바로 튜닝할 수 있습니다.** 그래서 물리엔진 내부(23.5)는 힘 기반으로, 카메라·UI 연출은 이 형태로 쓰는 것이 보통입니다.
+
+\`ζ=1\`은 진동 없이 가장 빠르게 목표로 수렴하는 임계 감쇠입니다.
+
+\`\`\`txt
+ζ < 1  통통 튀며 수렴 (underdamped, 젤리 느낌)
+ζ = 1  전혀 튀지 않고 최단 시간에 정착 (critical, 카메라 기본값)
+ζ > 1  느릿하게 기어감 (overdamped)
+\`\`\`
+
+\`\`\`js
+function updateSpring1D(state, target, frequency, dampingRatio, dt) {
+  const omega = 2 * Math.PI * frequency;
+  const acceleration = omega * omega * (target - state.position)
+    - 2 * dampingRatio * omega * state.velocity;
+  state.velocity += acceleration * dt;
+  state.position += state.velocity * dt;
+}
+\`\`\`
+
+큰 \`dt\`에서는 이 단순 적분도 불안정할 수 있으므로 고정 스텝 또는 해석적 spring 공식을 사용합니다.
+
+| 값을 바꾸면 | 체감 |
+|---|---|
+| \`frequency\` 증가 | 목표를 더 빠르고 단단하게 따라감 |
+| \`frequency\` 감소 | 느리고 부드럽게 따라감 |
+| \`dampingRatio < 1\` | 목표를 지나쳐 흔들림 |
+| \`dampingRatio = 1\` | 진동 없이 빠르게 정착 |
+| \`dampingRatio > 1\` | 진동은 없지만 둔하게 정착 |
+
+## 101. Steering behavior
+
+![Seek, Arrive, Pursuit의 차이](./images/diagram_087_steering.svg)
+
+### Seek
+
+\`\`\`js
+function seek(position, velocity, target, maxSpeed) {
+  const desired = mul(normalize(sub(target, position)), maxSpeed);
+  return sub(desired, velocity); // 원하는 속도 변화
+}
+\`\`\`
+
+### Arrive
+
+목표 근처에서 원하는 속력을 줄여 지나침을 줄입니다.
+
+\`\`\`js
+function arrive(position, velocity, target, maxSpeed, slowRadius) {
+  const offset = sub(target, position);
+  const dist = length(offset);
+  if (dist === 0) return mul(velocity, -1);
+  const speed = maxSpeed * Math.min(dist / slowRadius, 1);
+  return sub(mul(offset, speed / dist), velocity);
+}
+\`\`\`
+
+### Pursuit와 예측 조준
+
+현재 위치가 아니라 미래 위치를 목표로 삼습니다.
+
+\`\`\`js
+function predictTarget(targetPos, targetVel, pursuerPos, pursuerSpeed) {
+  const distanceToTarget = distance(pursuerPos, targetPos);
+  const lookAhead = pursuerSpeed > 0 ? distanceToTarget / pursuerSpeed : 0;
+  return add(targetPos, mul(targetVel, lookAhead));
+}
+\`\`\`
+
+이 함수들이 반환하는 값은 위치가 아니라 steering, 즉 원하는 가속도의 원재료입니다. 실제 업데이트는 다음처럼 최대가속도와 최대속력을 제한해 연결합니다.
+
+\`\`\`js
+function clampLength(v, maxLength) {
+  const len = length(v);
+  return len > maxLength ? mul(v, maxLength / len) : v;
+}
+
+function integrateAgent(agent, steering, dt) {
+  const acceleration = clampLength(steering, agent.maxAcceleration);
+  agent.velocity = add(agent.velocity, mul(acceleration, dt));
+  agent.velocity = clampLength(agent.velocity, agent.maxSpeed);
+  agent.position = add(agent.position, mul(agent.velocity, dt));
+}
+\`\`\`
+
+위 Pursuit는 \`현재 거리 / 추적자 속력\`만큼 앞을 보는 간단한 근사입니다. 빠르게 방향을 바꾸는 목표에는 빗나갈 수 있습니다. 정확한 등속 요격은 상대 위치와 상대속도의 2차 방정식을 풀어야 하며, 중력이 있으면 23.4의 탄도 공식까지 결합해야 합니다.
+
+## 102. 경로, 스플라인, 일정 속도
+
+Catmull–Rom은 제어점을 통과하므로 경로 제작에 편리합니다.
+
+![Catmull-Rom 제어점과 일정하지 않은 샘플 간격](./images/diagram_097_spline_arclength.svg)
+
+네 점 중 이 함수가 그리는 실제 구간은 \`p1 → p2\`입니다. \`p0\`와 \`p3\`는 양끝의 진행 방향과 휘어짐을 정합니다.
+
+\`\`\`js
+function catmullRom(p0, p1, p2, p3, t) {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return {
+    x: 0.5 * ((2*p1.x) + (-p0.x+p2.x)*t +
+      (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 +
+      (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+    y: 0.5 * ((2*p1.y) + (-p0.y+p2.y)*t +
+      (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 +
+      (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+  };
+}
+\`\`\`
+
+곡선에서 \`t\`를 일정하게 늘려도 실제 이동 거리는 일정하지 않습니다. 일정 속도 이동에는 곡선을 여러 구간으로 샘플링해 누적 길이표(arc-length table)를 만들고, 원하는 이동 거리와 가장 가까운 \`t\`를 이진 탐색합니다. 접선은 가까운 두 점의 차이 또는 곡선의 미분으로 구합니다.
+
+\`\`\`js
+function buildArcLengthTable(sampleCurve, samples = 100) {
+  const table = [{ t: 0, length: 0 }];
+  let previous = sampleCurve(0);
+  let total = 0;
+  for (let i=1; i<=samples; i++) {
+    const t = i / samples;
+    const point = sampleCurve(t);
+    total += distance(previous, point);
+    table.push({ t, length: total });
+    previous = point;
+  }
+  return table;
+}
+
+function findTAtDistance(table, distanceAlongCurve) {
+  const total = table[table.length - 1].length;
+  const target = Math.max(0, Math.min(total, distanceAlongCurve));
+  let low = 0, high = table.length - 1;
+  while (low + 1 < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (table[mid].length < target) low = mid; else high = mid;
+  }
+  const span = table[high].length - table[low].length;
+  const u = span > 0 ? (target - table[low].length) / span : 0;
+  return lerp(table[low].t, table[high].t, u);
+}
+\`\`\`
+
+## 103. 길 찾기와 공간 탐색
+
+A*는 실제 비용 \`g\`와 남은 거리의 추정값 \`h\`를 합친 값이 작은 노드를 먼저 탐색합니다.
+
+$$f(n)=g(n)+h(n)$$
+
+![A*의 g, h, f와 경로 복원](./images/diagram_098_astar.svg)
+
+- 4방향 grid: Manhattan distance
+- 자유 방향 또는 8방향 grid: Euclidean/Octile distance
+- \`h=0\`: Dijkstra와 같음
+- 최단 경로를 보장하려면 \`h\`가 실제 남은 비용을 과대평가하지 않아야 함
+
+\`\`\`txt
+open set   아직 조사할 후보. f가 가장 작은 노드를 꺼낸다.
+closed set 이미 조사를 끝낸 노드.
+parent     이 노드에 가장 싸게 도착한 직전 노드. 마지막에 역추적한다.
+\`\`\`
+
+\`\`\`js
+function reconstructPath(cameFrom, current) {
+  const path = [current];
+  while (cameFrom.has(current)) {
+    current = cameFrom.get(current);
+    path.push(current);
+  }
+  return path.reverse();
+}
+
+function manhattan(a, b) {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+\`\`\`
+
+A*의 한 반복은 \`open에서 최소 f 꺼내기 → 목표인지 확인 → 이웃의 새 g 계산 → 더 싸면 parent와 점수 갱신\`입니다. 작은 예제는 배열 탐색으로 충분하지만 큰 맵은 최소 힙 priority queue를 사용합니다.
+
+NavMesh에서는 삼각형/다각형을 노드로 보고 portal을 따라 탐색한 뒤 funnel 알고리즘으로 경로를 곧게 폅니다. 길 찾기는 전역 경로를 만들고 Steering은 그 경로를 실제 움직임으로 따라갑니다.
+
+## 104. 난수와 노이즈
+
+![불연속 난수와 연속 노이즈 비교](./images/diagram_099_random_noise.svg)
+
+\`Math.random()\`의 균일 난수를 그대로 반지름으로 쓰면 **점이 원 중심 쪽으로 몰립니다.** 반지름이 $r$인 지점의 둘레는 $r$에 비례해 길어지는데, 모든 $r$을 똑같은 확률로 뽑으면 좁은 안쪽 링과 넓은 바깥쪽 링에 같은 수의 점이 들어가기 때문입니다. 그 결과 안쪽이 촘촘해집니다.
+
+넓이가 $r^2$에 비례하므로, 반지름에 **제곱근**을 씌우면 이 편향이 정확히 상쇄되어 원판 전체에 균일하게 뿌려집니다.
+
+\`\`\`js
+function randomPointInDisk(radius) {
+  const angle = Math.random() * Math.PI * 2;
+  const r = radius * Math.sqrt(Math.random());
+  return { x: Math.cos(angle) * r, y: Math.sin(angle) * r };
+}
+\`\`\`
+
+가중 랜덤은 총 가중치 안에서 난수를 뽑고 누적합을 통과하는 첫 항목을 선택합니다. Perlin/Simplex 계열의 연속 노이즈는 지형, 구름, 카메라 흔들림처럼 이웃 값이 부드럽게 이어져야 할 때 사용합니다. 재현 가능한 게임플레이에는 seed를 지정할 수 있는 PRNG가 필요합니다.
+
+\`\`\`js
+function weightedChoice(items, random = Math.random) {
+  const total = items.reduce((sum, item) => sum + item.weight, 0);
+  if (total <= 0) return null;
+  let r = random() * total;
+  for (const item of items) {
+    r -= item.weight;
+    if (r < 0) return item.value;
+  }
+  return items[items.length - 1].value;
+}
+
+function mulberry32(seed) {
+  return function random() {
+    seed |= 0;
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const seededRandom = mulberry32(12345);
+\`\`\`
+
+같은 seed는 같은 난수열을 만들어 디버깅과 리플레이에 유리합니다. 반면 카메라 흔들림에 매 프레임 독립 난수를 넣으면 덜컥거리므로, 시간축에서 이웃 값이 이어지는 noise를 샘플링해야 합니다.
+
+## 105. 부동소수점과 큰 월드
+
+부동소수점은 실수를 유한한 비트로 근사하므로 \`0.1 + 0.2 === 0.3\` 같은 비교는 실패할 수 있습니다.
+
+\`\`\`js
+function nearlyEqual(a, b, absEps = 1e-8, relEps = 1e-6) {
+  const diff = Math.abs(a - b);
+  return diff <= absEps || diff <= relEps * Math.max(Math.abs(a), Math.abs(b));
+}
+
+function safeNormalize(v, epsilon = 1e-8) {
+  const lenSq = v.x * v.x + v.y * v.y;
+  if (lenSq < epsilon * epsilon) return { x: 0, y: 0 };
+  const invLen = 1 / Math.sqrt(lenSq);
+  return { x: v.x * invLen, y: v.y * invLen };
+}
+\`\`\`
+
+실무 점검표:
+
+- 정규화 전에 길이가 거의 0인지 확인
+- 역행렬 전에 determinant가 거의 0인지 확인
+- \`acos\` 입력을 \`-1..1\`로 clamp
+- 임펄스 분모와 질량이 유효한지 확인
+- NaN이 생긴 프레임에서 즉시 assert/log
+- 충돌에는 작은 slop을 허용해 떨림 감소
+- 매우 큰 월드는 카메라 근처로 원점을 옮기는 floating origin 사용
+- 미터, 초, 킬로그램 등 단위를 프로젝트 전체에서 통일
+
+---
+
+# 106. 확장판 최종 지도
+
+\`\`\`txt
+그래픽스:
+기저와 행렬 → 좌표 공간 → 클리핑/래스터화 → 조명 → 색/텍스처
+
+물리:
+고정 스텝 → Broad Phase → Narrow Phase → Manifold → 반복 Solver → CCD
+
+게임플레이:
+보간/스프링 → Steering → 경로/길 찾기 → 난수/노이즈 → 수치 안정성
+\`\`\`
+
+모든 공식을 한꺼번에 외울 필요는 없습니다. 중요한 것은 값이 **어느 공간에 있고**, **어떤 단위를 쓰며**, **어느 시간 스텝에서 계산되고**, **어떤 규약으로 다음 단계에 전달되는지** 추적하는 습관입니다.
 
 `;
 

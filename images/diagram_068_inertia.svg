@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 320" width="100%" height="100%">
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-rot" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff" rx="8" />
+  <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
+
+  <text x="25" y="30" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0f172a">질량 분포에 따른 관성 모멘트 (Inertia)의 차이</text>
+  <text x="25" y="48" font-family="sans-serif" font-size="11" fill="#64748b">같은 질량이더라도 질량이 회전축에서 멀리 분포할수록 돌리기(가속하기) 어렵습니다.</text>
+
+  <!-- Left: Concentrated Mass (Low Inertia) -->
+  <g transform="translate(25, 65)">
+    <rect width="240" height="225" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="6" />
+    <text x="15" y="25" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">1. 회전시키기 쉬움 (낮은 관성)</text>
+    <text x="15" y="42" font-family="sans-serif" font-size="11" fill="#64748b">질량이 회전축 가까이에 뭉쳐 있음</text>
+
+    <!-- Center point / Rotation axis -->
+    <g transform="translate(120, 125)">
+      <circle cx="0" cy="0" r="28" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2" />
+      
+      <!-- Axis indicator -->
+      <circle cx="0" cy="0" r="3" fill="#ffffff" />
+      <circle cx="0" cy="0" r="1.5" fill="#000000" />
+      
+      <text x="0" y="45" font-family="sans-serif" font-size="11" fill="#1d4ed8" font-weight="bold" text-anchor="middle">작고 단단한 공 (질량 m)</text>
+      
+      <!-- Rotation curve -->
+      <path d="M -40,-15 A 42,42 0 1,1 40,-15" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 2" marker-end="url(#arrow-rot)" />
+      <text x="0" y="-50" font-family="sans-serif" font-size="11" font-weight="bold" fill="#d97706" text-anchor="middle">작은 힘으로도 휙 돔</text>
+      <text x="0" y="-35" font-family="monospace" font-size="11" fill="#475569" text-anchor="middle">Inertia: 작음</text>
+    </g>
+  </g>
+
+  <!-- Right: Distributed Mass (High Inertia) -->
+  <g transform="translate(285, 65)">
+    <rect width="240" height="225" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="6" />
+    <text x="15" y="25" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">2. 회전시키기 어려움 (높은 관성)</text>
+    <text x="15" y="42" font-family="sans-serif" font-size="11" fill="#64748b">질량이 회전축에서 먼 곳까지 넓게 퍼짐</text>
+
+    <!-- Center point / Rotation axis -->
+    <g transform="translate(120, 125)">
+      <!-- Long Rod -->
+      <rect x="-85" y="-6" width="170" height="12" rx="4" fill="#cbd5e1" stroke="#64748b" stroke-width="2" />
+      
+      <!-- Weight spheres at ends to emphasize distributed mass -->
+      <circle cx="-80" cy="0" r="12" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+      <circle cx="80" cy="0" r="12" fill="#94a3b8" stroke="#475569" stroke-width="1.5" />
+
+      <!-- Axis indicator -->
+      <circle cx="0" cy="0" r="3" fill="#ffffff" />
+      <circle cx="0" cy="0" r="1.5" fill="#000000" />
+      
+      <text x="0" y="45" font-family="sans-serif" font-size="11" fill="#475569" font-weight="bold" text-anchor="middle">양끝이 무거운 긴 막대 (질량 m)</text>
+      
+      <!-- Rotation curve -->
+      <path d="M -40,-25 A 47,47 0 1,1 40,-25" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 2" marker-end="url(#arrow-rot)" />
+      <text x="0" y="-55" font-family="sans-serif" font-size="11" font-weight="bold" fill="#d97706" text-anchor="middle">돌리는데 큰 힘 필요</text>
+      <text x="0" y="-40" font-family="monospace" font-size="11" fill="#475569" text-anchor="middle">Inertia: 매우 큼</text>
+    </g>
+  </g>
+</svg>

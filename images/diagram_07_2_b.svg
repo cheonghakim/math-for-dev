@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 360" width="100%" height="100%">
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#10b981" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff" rx="8" />
+  <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
+
+  <text x="25" y="30" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0f172a">B. 접선 공간 (Tangent Space)과 TBN 좌표계</text>
+  <text x="25" y="48" font-family="sans-serif" font-size="11" fill="#64748b">표면 접선(T)과 법선(N)의 외적을 통해 종법선(B)을 계산</text>
+
+  <!-- Graphic Container -->
+  <g transform="translate(40, 20)">
+    <!-- 3D Grid Plane -->
+    <polygon points="100,230 320,230 400,150 180,150" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <!-- Grid Lines on Plane -->
+    <line x1="140" y1="230" x2="220" y2="150" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="180" y1="230" x2="260" y2="150" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="220" y1="230" x2="300" y2="150" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="260" y1="230" x2="340" y2="150" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="140" y1="190" x2="360" y2="190" stroke="#e2e8f0" stroke-width="1" />
+    <line x1="160" y1="170" x2="380" y2="170" stroke="#e2e8f0" stroke-width="1" />
+
+    <!-- Center point on the surface -->
+    <!-- Point P = (250, 190) -->
+    
+    <!-- Tangent Vector T -->
+    <line x1="250" y1="190" x2="340" y2="190" fill="none" stroke="#ef4444" stroke-width="3.5" marker-end="url(#arrow-red)" />
+    <text x="345" y="185" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ef4444">Tangent (T)</text>
+    <text x="345" y="198" font-family="sans-serif" font-size="10" fill="#64748b">표면 접선 (U축)</text>
+
+    <!-- Bitangent Vector B -->
+    <line x1="250" y1="190" x2="304" y2="150" fill="none" stroke="#10b981" stroke-width="3.5" marker-end="url(#arrow-green)" />
+    <text x="312" y="145" font-family="sans-serif" font-size="13" font-weight="bold" fill="#10b981">Bitangent (B)</text>
+    <text x="312" y="158" font-family="sans-serif" font-size="10" fill="#64748b">종법선 (V축)</text>
+
+    <!-- Normal Vector N -->
+    <line x1="250" y1="190" x2="250" y2="92" fill="none" stroke="#3b82f6" stroke-width="3.5" marker-end="url(#arrow-blue)" />
+    <text x="235" y="70" font-family="sans-serif" font-size="13" font-weight="bold" fill="#3b82f6" text-anchor="middle">Normal (N)</text>
+    <text x="235" y="83" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">표면 법선 (Z축)</text>
+
+    <!-- Center Point marker -->
+    <circle cx="250" cy="190" r="4" fill="#0f172a" />
+    <text x="245" y="206" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">P</text>
+
+    <!-- Right-angle indicators -->
+    <path d="M 250,175 L 265,175 L 265,190" fill="none" stroke="#64748b" stroke-width="1" />
+    <path d="M 250,175 L 258,169 L 258,184" fill="none" stroke="#64748b" stroke-width="1" />
+  </g>
+
+  <!-- Formula block -->
+  <rect x="25" y="295" width="500" height="45" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" rx="4" />
+  <text x="45" y="322" font-family="monospace" font-size="14" font-weight="bold" fill="#0f172a">B = N × T <tspan fill="#64748b" font-weight="normal" font-size="12">  (두 벡터가 직교할 때, 외적을 통해 세 번째 축 B를 생성)</tspan></text>
+</svg>

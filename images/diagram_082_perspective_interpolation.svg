@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260">
+  <rect width="800" height="260" rx="16" fill="#f8fafc"/>
+  <text x="400" y="28" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#0f172a">원근 보정 보간</text>
+  <g font-family="sans-serif" text-anchor="middle">
+    <text x="205" y="58" font-size="14" fill="#ef4444">화면에서 단순 선형 보간</text><text x="600" y="58" font-size="14" fill="#16a34a">1/w를 이용한 원근 보정</text>
+    <g stroke="#334155" stroke-width="3" fill="none"><path d="M65 205L320 205L265 80Z"/><path d="M460 205L715 205L660 80Z"/></g>
+    <g stroke="#ef4444" stroke-width="2"><path d="M116 205L344 150"/><path d="M167 205L323 127"/><path d="M218 205L301 104"/></g>
+    <g stroke="#16a34a" stroke-width="2"><path d="M511 205L699 168"/><path d="M562 205L683 132"/><path d="M613 205L668 97"/></g>
+    <text x="205" y="238" font-size="12" fill="#64748b">텍스처 선이 휘어 보임</text><text x="600" y="238" font-size="12" fill="#64748b">3D 평면의 간격이 올바르게 보임</text>
+  </g>
+</svg>
