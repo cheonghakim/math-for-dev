@@ -16,3 +16,10 @@ node_modules/
 validate_generated_output.js
 validate_js_snippets.js
 validate_numeric_examples.js
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
