@@ -1,0 +1,20 @@
+# Cloudflare Workers "assets upload" ignore list. This does NOT affect git.
+# It only controls which files get published as static assets on the site.
+# The real blocker: node_modules/workerd is 122 MiB and exceeds the 25 MiB
+# per-asset limit, so node_modules must never be uploaded.
+
+node_modules
+.git
+.github
+.vscode
+.agents
+
+# Build tooling and config — not part of the served site.
+generate_viewer.js
+og-image.source.html
+package.json
+package-lock.json
+.gitignore
+.assetsignore
+wrangler.toml
+wrangler.jsonc
