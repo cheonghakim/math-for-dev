@@ -35,8 +35,8 @@ Copyright © 2026 Cheongha Kim.
 
 ### 오픈소스 라이브러리 라이선스
 
-뷰어(`index.html`)가 실행될 때 외부 CDN을 통해 불러와서 활용하는 오픈소스 라이브러리들은 각각의 원본 라이선스를 따릅니다:
+뷰어(`index.html`)가 실행될 때 외부 CDN에서 불러오는 라이브러리와 빌드 과정에서 사용하는 라이브러리는 각각의 원본 라이선스를 따릅니다:
 
-- **Marked.js**: [MIT License](https://github.com/markedjs/marked/blob/master/LICENSE)
+- **Marked.js** (빌드 의존성): [MIT License](https://github.com/markedjs/marked/blob/master/LICENSE)
 - **MathJax**: [Apache License 2.0](https://github.com/mathjax/MathJax/blob/master/LICENSE)
 - **Prism.js**: [MIT License](https://github.com/prismjs/prism/blob/master/LICENSE)

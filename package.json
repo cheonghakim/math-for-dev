@@ -1,0 +1,16 @@
+{
+  "name": "math-for-dev",
+  "version": "5.0.0",
+  "private": true,
+  "description": "그래픽스/물리엔진 개발자를 위한 수학·물리 핸드북",
+  "scripts": {
+    "build": "node generate_viewer.js",
+    "validate:syntax": "node validate_js_snippets.js",
+    "validate:numeric": "node validate_numeric_examples.js",
+    "validate:output": "node validate_generated_output.js",
+    "test": "npm run validate:syntax && npm run validate:numeric && npm run build && npm run validate:output"
+  },
+  "dependencies": {
+    "marked": "^18.0.6"
+  }
+}

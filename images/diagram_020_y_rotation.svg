@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 380" width="100%" height="100%">
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff" rx="8" />
+  <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
+
+  <text x="25" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="15" font-weight="bold" fill="#0f172a">y축 단위 벡터 (0, 1)의 회전과 성분 분해</text>
+  <text x="25" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y축을 반시계 방향으로 θ만큼 회전했을 때 성분이 분해되는 원리</text>
+
+  <!-- Coordinates origin at (220, 280) -->
+  <g transform="translate(220, 280)">
+    <!-- Axes -->
+    <line x1="-150" y1="0" x2="150" y2="0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
+    <line x1="0" y1="40" x2="0" y2="-240" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
+    <text x="135" y="15" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">x</text>
+    <text x="10" y="-225" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y</text>
+
+    <!-- Original y-axis Vector (0, 1) (length = 200) -->
+    <line x1="0" y1="0" x2="0" y2="-200" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 4" />
+    <circle cx="0" cy="-200" r="4" fill="#cbd5e1" />
+    <text x="10" y="-195" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8">원래 y축 (0, 1)</text>
+
+    <!-- Rotated Vector by 30 degrees to the left (CCW) -> ( -100, -173.2 ) -->
+    <line x1="0" y1="0" x2="-97" y2="-168" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
+    <circle cx="-100" cy="-173.2" r="5" fill="#ef4444" />
+
+    <!-- Vector Label -->
+    <text x="-135" y="-190" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#ef4444">rotatedY</text>
+    <text x="-135" y="-175" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#ef4444">(-sin θ, cos θ)</text>
+
+    <!-- Projection to y-axis (Vertical side, adjacent, length = 173.2) -->
+    <line x1="-100" y1="-173.2" x2="0" y2="-173.2" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="2 2" />
+    <line x1="0" y1="0" x2="0" y2="-173.2" fill="none" stroke="#3b82f6" stroke-width="2" />
+    <text x="8" y="-90" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="bold" fill="#3b82f6">cos θ</text>
+    <text x="8" y="-75" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#64748b">(인접변, y성분)</text>
+
+    <!-- Projection to x-axis (Horizontal side, opposite, length = 100) -->
+    <line x1="0" y1="0" x2="-100" y2="0" fill="none" stroke="#10b981" stroke-width="2" />
+    <line x1="-100" y1="0" x2="-100" y2="-173.2" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="2 2" />
+    <text x="-95" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="bold" fill="#10b981">-sin θ</text>
+    <text x="-95" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#64748b">(대변, x성분)</text>
+
+    <!-- Angle Arc (between vertical y-axis and rotated vector) -->
+    <!-- M 0,-80 (angle 270) to end point at 240 deg: x = -40, y = -69.28 -->
+    <path d="M 0,-80 A 80,80 0 0,0 -40,-69.3" fill="none" stroke="#f59e0b" stroke-width="2" />
+    <text x="-18" y="-95" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#d97706">θ</text>
+
+    <!-- Origin point -->
+    <circle cx="0" cy="0" r="4" fill="#0f172a" />
+  </g>
+
+  <!-- Explanation card on the right -->
+  <g transform="translate(370, 75)">
+    <rect width="155" height="270" fill="#f8fafc" stroke="#e2e8f0" rx="4" />
+    <text x="12" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="bold" fill="#0f172a">y축 성분 분해:</text>
+
+    <text x="12" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#3b82f6">빗변 (Hypotenuse):</text>
+    <text x="12" y="70" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#0f172a">길이 = 1 (단위 벡터)</text>
+
+    <text x="12" y="105" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#10b981">대변 (Opposite):</text>
+    <text x="12" y="120" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#0f172a">x축 성분 = sin θ</text>
+    <text x="12" y="135" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#0f172a">방향이 왼쪽(-)이므로</text>
+    <text x="12" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#10b981">→ -sin θ</text>
+
+    <text x="12" y="185" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#3b82f6">인접변 (Adjacent):</text>
+    <text x="12" y="200" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#0f172a">y축 성분 = cos θ</text>
+    <text x="12" y="215" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#0f172a">방향이 위쪽(+)이므로</text>
+    <text x="12" y="230" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#3b82f6">→ cos θ</text>
+  </g>
+</svg>

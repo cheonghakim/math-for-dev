@@ -19,66 +19,66 @@
   <rect width="100%" height="100%" fill="#ffffff" rx="8" />
   <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
 
-  <text x="25" y="30" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0f172a">수학 좌표계(y-up) vs 화면 좌표계(y-down)에서의 90도 회전 비교</text>
-  <text x="25" y="48" font-family="sans-serif" font-size="11" fill="#64748b">y축의 방향 반전 때문에 시계(CW) 및 반시계(CCW) 회전 방향이 물리적으로 뒤집힙니다.</text>
+  <text x="25" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="15" font-weight="bold" fill="#0f172a">수학 좌표계(y-up) vs 화면 좌표계(y-down)에서의 90도 회전 비교</text>
+  <text x="25" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y축의 방향 반전 때문에 시계(CW) 및 반시계(CCW) 회전 방향이 물리적으로 뒤집힙니다.</text>
 
   <!-- Left: Mathematical Coordinate System (y-up) -->
   <g transform="translate(25, 60)">
     <rect width="260" height="235" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="6" />
-    <text x="15" y="25" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">수학 좌표계 (y-up)</text>
-    <text x="15" y="40" font-family="sans-serif" font-size="11" fill="#64748b">y축이 위로 갈수록 증가</text>
+    <text x="15" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a">수학 좌표계 (y-up)</text>
+    <text x="15" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y축이 위로 갈수록 증가</text>
 
     <!-- Origin at (110, 130) -->
     <g transform="translate(110, 130)">
       <!-- Axes -->
       <line x1="-80" y1="0" x2="90" y2="0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
       <line x1="0" y1="80" x2="0" y2="-90" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
-      <text x="95" y="4" font-family="sans-serif" font-size="11" fill="#64748b">x</text>
-      <text x="5" y="-95" font-family="sans-serif" font-size="11" fill="#64748b">y</text>
+      <text x="95" y="4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">x</text>
+      <text x="5" y="-95" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y</text>
 
       <!-- Base Vector v = (70, 0) -->
       <line x1="0" y1="0" x2="70" y2="0" fill="none" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-blue)" />
-      <text x="75" y="-8" font-family="sans-serif" font-size="10" font-weight="bold" fill="#3b82f6">v(1, 0)</text>
+      <text x="75" y="-8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#3b82f6">v(1, 0)</text>
 
       <!-- CCW 90° (UP) -->
       <line x1="0" y1="0" x2="0" y2="-70" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)" />
-      <text x="5" y="-55" font-family="sans-serif" font-size="10" font-weight="bold" fill="#10b981">(-y, x) = (0, 1)</text>
-      <text x="5" y="-43" font-family="sans-serif" font-size="11" fill="#047857">CCW (반시계)</text>
+      <text x="5" y="-55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#10b981">(-y, x) = (0, 1)</text>
+      <text x="5" y="-43" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#047857">CCW (반시계)</text>
 
       <!-- CW 90° (DOWN) -->
       <line x1="0" y1="0" x2="0" y2="70" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
-      <text x="5" y="55" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ef4444">(y, -x) = (0, -1)</text>
-      <text x="5" y="67" font-family="sans-serif" font-size="11" fill="#b91c1c">CW (시계)</text>
+      <text x="5" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#ef4444">(y, -x) = (0, -1)</text>
+      <text x="5" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#b91c1c">CW (시계)</text>
     </g>
   </g>
 
   <!-- Right: Screen Coordinate System (y-down) -->
   <g transform="translate(315, 60)">
     <rect width="260" height="235" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="6" />
-    <text x="15" y="25" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">화면 좌표계 (y-down)</text>
-    <text x="15" y="40" font-family="sans-serif" font-size="11" fill="#64748b">y축이 아래로 갈수록 증가 (HTML5 Canvas 등)</text>
+    <text x="15" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a">화면 좌표계 (y-down)</text>
+    <text x="15" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y축이 아래로 갈수록 증가 (HTML5 Canvas 등)</text>
 
     <!-- Origin at (110, 130) -->
     <g transform="translate(110, 130)">
       <!-- Axes -->
       <line x1="-80" y1="0" x2="90" y2="0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
       <line x1="0" y1="-80" x2="0" y2="90" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow-gray)" />
-      <text x="95" y="4" font-family="sans-serif" font-size="11" fill="#64748b">x</text>
-      <text x="5" y="95" font-family="sans-serif" font-size="11" fill="#64748b">y</text>
+      <text x="95" y="4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">x</text>
+      <text x="5" y="95" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">y</text>
 
       <!-- Base Vector v = (70, 0) -->
       <line x1="0" y1="0" x2="70" y2="0" fill="none" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrow-blue)" />
-      <text x="75" y="-8" font-family="sans-serif" font-size="10" font-weight="bold" fill="#3b82f6">v(1, 0)</text>
+      <text x="75" y="-8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#3b82f6">v(1, 0)</text>
 
       <!-- CW 90° -->
       <line x1="0" y1="0" x2="0" y2="70" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-green)" />
-      <text x="5" y="55" font-family="sans-serif" font-size="10" font-weight="bold" fill="#10b981">(-y, x) = (0, 1)</text>
-      <text x="5" y="67" font-family="sans-serif" font-size="11" fill="#047857">CW (시계 방향)</text>
+      <text x="5" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#10b981">(-y, x) = (0, 1)</text>
+      <text x="5" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#047857">CW (시계 방향)</text>
 
       <!-- CCW 90° -->
       <line x1="0" y1="0" x2="0" y2="-70" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
-      <text x="5" y="-55" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ef4444">(y, -x) = (0, -1)</text>
-      <text x="5" y="-43" font-family="sans-serif" font-size="11" fill="#b91c1c">CCW (반시계 방향)</text>
+      <text x="5" y="-55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" font-weight="bold" fill="#ef4444">(y, -x) = (0, -1)</text>
+      <text x="5" y="-43" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#b91c1c">CCW (반시계 방향)</text>
     </g>
   </g>
 </svg>

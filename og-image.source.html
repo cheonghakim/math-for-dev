@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<!-- Source for images/og-image.png. Rasterize: chrome --headless --window-size=1200,630 --screenshot=images/og-image.png og-image.source.html -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1200px; height:630px; overflow:hidden; }
+  .card {
+    width:1200px; height:630px;
+    background: radial-gradient(1000px 600px at 80% 10%, #1e3a8a 0%, #0f172a 55%, #0b0f19 100%);
+    color:#f8fafc;
+    font-family:'Inter', -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    padding:80px 90px;
+    display:flex; flex-direction:column; justify-content:center;
+    position:relative;
+  }
+  svg.bg { position:absolute; inset:0; width:1200px; height:630px; opacity:0.5; }
+  .kicker { font-size:26px; font-weight:600; letter-spacing:2px; color:#60a5fa; margin-bottom:26px; }
+  h1 { font-size:74px; font-weight:800; line-height:1.18; letter-spacing:-1px; }
+  h1 .grad { background:linear-gradient(135deg,#60a5fa 0%,#38bdf8 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  p { margin-top:30px; font-size:30px; color:#94a3b8; line-height:1.5; }
+  .chips { margin-top:44px; display:flex; gap:14px; }
+  .chip { font-size:23px; font-weight:600; color:#cbd5e1; border:1px solid #334155; background:rgba(30,41,59,.75); padding:11px 22px; border-radius:999px; }
+  .url { position:absolute; bottom:56px; right:90px; font-size:24px; font-weight:600; color:#64748b; }
+</style>
+</head>
+<body>
+<div class="card">
+  <svg class="bg" viewBox="0 0 1200 630">
+    <defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#3b82f6"/>
+      </marker>
+      <marker id="ao" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#f97316"/>
+      </marker>
+    </defs>
+    <g stroke="#1e293b" stroke-width="1">
+      <path d="M0 70H1200M0 140H1200M0 210H1200M0 280H1200M0 350H1200M0 420H1200M0 490H1200M0 560H1200"/>
+      <path d="M70 0V630M140 0V630M210 0V630M280 0V630M350 0V630M420 0V630M490 0V630M560 0V630M630 0V630M700 0V630M770 0V630M840 0V630M910 0V630M980 0V630M1050 0V630M1120 0V630"/>
+    </g>
+    <g transform="translate(950 430)">
+      <circle r="5" fill="#64748b"/>
+      <line x1="0" y1="0" x2="170" y2="-40" stroke="#3b82f6" stroke-width="6" marker-end="url(#ah)"/>
+      <line x1="0" y1="0" x2="80" y2="-150" stroke="#f97316" stroke-width="6" marker-end="url(#ao)"/>
+      <path d="M0 0 L120 -28" stroke="#10b981" stroke-width="7" opacity="0.9"/>
+      <path d="M80 -150 L120 -28" stroke="#64748b" stroke-width="3" stroke-dasharray="7 7"/>
+    </g>
+  </svg>
+  <div class="kicker">FOR GRAPHICS &amp; PHYSICS ENGINE DEVS</div>
+  <h1>수학·물리<br><span class="grad">핸드북</span></h1>
+  <p>벡터 · 내적 · 외적 · 행렬 · 쿼터니언 · 충돌 판정<br>“왜 이 공식이 나오는지”부터 그림으로 이해하기</p>
+  <div class="chips">
+    <div class="chip">인터랙티브 시각화</div>
+    <div class="chip">무료 · 한국어</div>
+  </div>
+  <div class="url">dev-math.log-trace.net</div>
+</div>
+</body>
+</html>

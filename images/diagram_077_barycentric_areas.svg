@@ -3,18 +3,18 @@
   <rect width="100%" height="100%" fill="#ffffff" rx="8" />
   <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
 
-  <text x="25" y="30" font-family="sans-serif" font-size="15" font-weight="bold" fill="#0f172a">무게중심 좌표 (Barycentric Coordinates)와 면적 비율</text>
-  <text x="25" y="48" font-family="sans-serif" font-size="11" fill="#64748b">삼각형 내부의 점 P는 각 꼭짓점 맞은편의 서브 삼각형 면적 비율 가중치(u, v, w)로 표현됩니다.</text>
+  <text x="25" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="15" font-weight="bold" fill="#0f172a">무게중심 좌표 (Barycentric Coordinates)와 면적 비율</text>
+  <text x="25" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">삼각형 내부의 점 P는 각 꼭짓점 맞은편의 서브 삼각형 면적 비율 가중치(u, v, w)로 표현됩니다.</text>
 
   <!-- Triangle container, vertices A(180, 80), B(60, 260), C(300, 260), P(170, 200) -->
   <g transform="translate(40, 20)">
     <!-- Sub-triangles filled with colors -->
     <!-- u corresponds to PBC (opposite to A) -->
     <polygon points="170,200 60,260 300,260" fill="#fee2e2" fill-opacity="0.8" stroke="#ef4444" stroke-width="1.5" />
-    
+
     <!-- v corresponds to PCA (opposite to B) -->
     <polygon points="170,200 300,260 180,80" fill="#dcfce7" fill-opacity="0.8" stroke="#22c55e" stroke-width="1.5" />
-    
+
     <!-- w corresponds to PAB (opposite to C) -->
     <polygon points="170,200 180,80 60,260" fill="#dbeafe" fill-opacity="0.8" stroke="#3b82f6" stroke-width="1.5" />
 
@@ -28,40 +28,40 @@
 
     <!-- Vertices Labels -->
     <circle cx="180" cy="80" r="5" fill="#0f172a" />
-    <text x="180" y="70" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">A</text>
+    <text x="180" y="70" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">A</text>
 
     <circle cx="60" cy="260" r="5" fill="#0f172a" />
-    <text x="45" y="265" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="end">B</text>
+    <text x="45" y="265" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="end">B</text>
 
     <circle cx="300" cy="260" r="5" fill="#0f172a" />
-    <text x="315" y="265" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">C</text>
+    <text x="315" y="265" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a">C</text>
 
     <!-- Point P -->
     <circle cx="170" cy="200" r="5" fill="#0f172a" />
-    <text x="165" y="190" font-family="sans-serif" font-size="13" font-weight="bold" fill="#0f172a">P</text>
+    <text x="165" y="190" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#0f172a">P</text>
 
     <!-- Area labels inside sub-triangles -->
-    <text x="175" y="245" font-family="sans-serif" font-size="13" font-weight="bold" fill="#b91c1c" text-anchor="middle">면적 (PBC) = u</text>
-    <text x="220" y="175" font-family="sans-serif" font-size="13" font-weight="bold" fill="#166534" text-anchor="middle">면적 (PCA) = v</text>
-    <text x="115" y="170" font-family="sans-serif" font-size="13" font-weight="bold" fill="#1e40af" text-anchor="middle">면적 (PAB) = w</text>
+    <text x="175" y="245" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#b91c1c" text-anchor="middle">면적 (PBC) = u</text>
+    <text x="220" y="175" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#166534" text-anchor="middle">면적 (PCA) = v</text>
+    <text x="115" y="170" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="bold" fill="#1e40af" text-anchor="middle">면적 (PAB) = w</text>
   </g>
 
   <!-- Explanatory formulas side panel -->
   <g transform="translate(375, 80)">
     <rect width="150" height="200" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" rx="4" />
-    <text x="15" y="25" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">가중치 면적비 공식:</text>
-    
-    <text x="15" y="55" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">u = Area(PBC) / S</text>
-    <text x="15" y="70" font-family="sans-serif" font-size="11" fill="#64748b">A의 맞은편 면적비</text>
-    
-    <text x="15" y="95" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">v = Area(PCA) / S</text>
-    <text x="15" y="110" font-family="sans-serif" font-size="11" fill="#64748b">B의 맞은편 면적비</text>
-    
-    <text x="15" y="135" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">w = Area(PAB) / S</text>
-    <text x="15" y="150" font-family="sans-serif" font-size="11" fill="#64748b">C의 맞은편 면적비</text>
-    
+    <text x="15" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#0f172a">가중치 면적비 공식:</text>
+
+    <text x="15" y="55" font-family="'Fira Code', Consolas, Monaco, 'Courier New', Courier, 'Nanum Gothic Coding', monospace" font-size="12" font-weight="bold" fill="#0f172a">u = Area(PBC) / S</text>
+    <text x="15" y="70" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">A의 맞은편 면적비</text>
+
+    <text x="15" y="95" font-family="'Fira Code', Consolas, Monaco, 'Courier New', Courier, 'Nanum Gothic Coding', monospace" font-size="12" font-weight="bold" fill="#0f172a">v = Area(PCA) / S</text>
+    <text x="15" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">B의 맞은편 면적비</text>
+
+    <text x="15" y="135" font-family="'Fira Code', Consolas, Monaco, 'Courier New', Courier, 'Nanum Gothic Coding', monospace" font-size="12" font-weight="bold" fill="#0f172a">w = Area(PAB) / S</text>
+    <text x="15" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">C의 맞은편 면적비</text>
+
     <line x1="15" y1="165" x2="135" y2="165" stroke="#cbd5e1" />
-    <text x="15" y="185" font-family="monospace" font-size="11" fill="#0f172a">S = 전체 면적 ABC</text>
-    <text x="15" y="195" font-family="monospace" font-size="11" fill="#0f172a">u + v + w = 1</text>
+    <text x="15" y="185" font-family="'Fira Code', Consolas, Monaco, 'Courier New', Courier, 'Nanum Gothic Coding', monospace" font-size="11" fill="#0f172a">S = 전체 면적 ABC</text>
+    <text x="15" y="195" font-family="'Fira Code', Consolas, Monaco, 'Courier New', Courier, 'Nanum Gothic Coding', monospace" font-size="11" fill="#0f172a">u + v + w = 1</text>
   </g>
 </svg>

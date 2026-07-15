@@ -1,7 +1,3 @@
-# Build and validation scripts
-generate_viewer.js
-validate_js_snippets.js
-
 # Intermediate / redundant generated pages
 svg_viewer.html
 
@@ -14,3 +10,9 @@ svg_viewer.html
 # OS metadata
 .DS_Store
 Thumbs.db
+node_modules/
+
+# Local validation scripts (build script generate_viewer.js is tracked)
+validate_generated_output.js
+validate_js_snippets.js
+validate_numeric_examples.js

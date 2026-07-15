@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 550 380" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#ffffff" rx="8" />
+  <rect width="100%" height="100%" fill="none" stroke="#e2e8f0" stroke-width="1" rx="8" />
+
+  <text x="25" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="15" font-weight="bold" fill="#0f172a">3D 회전 행렬의 부호 결정 원리 (기저 벡터 회전)</text>
+  <text x="25" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#64748b">행렬의 각 열(Column)은 원래의 기준축(X, Y, Z)이 회전한 후 도달한 새로운 방향 벡터입니다.</text>
+
+  <!-- Left: Circle / Coordinate System (translate 130, 200) -->
+  <g transform="translate(130, 210)">
+    <!-- Axes Grid -->
+    <line x1="-100" y1="0" x2="100" y2="0" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+    <line x1="0" y1="100" x2="0" y2="-100" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+
+    <!-- Y-axis looking down notice -->
+    <circle cx="0" cy="0" r="8" fill="#10b981" />
+    <circle cx="0" cy="0" r="2" fill="#ffffff" />
+    <text x="12" y="15" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10" fill="#10b981" font-weight="bold">Y축 (화면 뚫고 나옴/회전축)</text>
+
+    <!-- original X axis -->
+    <line x1="0" y1="0" x2="80" y2="0" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3 3" />
+    <text x="85" y="4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8">원래 X (1,0,0)</text>
+
+    <!-- original Z axis -->
+    <line x1="0" y1="0" x2="0" y2="-80" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="3 3" />
+    <text x="5" y="-85" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8">원래 Z (0,0,1)</text>
+
+    <!-- CCW Rotation Arc (from Z to X) -->
+    <path d="M 0,-50 A 50,50 0 0,1 25,-43.3" fill="none" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrow-gold)" />
+    <text x="12" y="-55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#d97706" font-weight="bold">θ (CCW)</text>
+
+    <!-- Rotated Z axis (towards +X) -->
+    <!-- angle = 30 deg. rotated Z (0, -80) -> (40, -69.3) -->
+    <line x1="0" y1="0" x2="40" y2="-69.3" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow-blue)" />
+    <text x="45" y="-75" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="bold" fill="#3b82f6">새 Z (sin θ, 0, cos θ)</text>
+
+    <!-- Rotated X axis (towards -Z) -->
+    <!-- angle = 30 deg. rotated X (80, 0) -> (69.3, 40) but in Z-X rotation, X goes to -Z, so x=69.3, z=40 (down is +Z, up is -Z, wait, let's make it standard: x=cos θ, z=-sin θ, which is x=69.3, y=0, z=-40 (up). So (69.3, -40)) -->
+    <line x1="0" y1="0" x2="69.3" y2="40" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)" />
+    <text x="75" y="45" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="bold" fill="#ef4444">새 X (cos θ, 0, -sin θ)</text>
+  </g>
+
+  <!-- Markers -->
+  <defs>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#3b82f6" />
+    </marker>
+    <marker id="arrow-gold" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <!-- Right: Matrix Connection (translate 280, 80) -->
+  <g transform="translate(280, 80)">
+    <!-- Explanatory Box -->
+    <rect x="0" y="0" width="245" height="260" fill="#f8fafc" stroke="#e2e8f0" rx="6" />
+
+    <text x="15" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#0f172a">Ry(θ) 행렬의 열벡터 배치:</text>
+
+    <!-- Matrix Drawing -->
+    <text x="35" y="70" font-family="monospace" font-size="14" fill="#0f172a">Ry(θ) = </text>
+
+    <!-- Large brackets -->
+    <path d="M 90,55 L 85,55 L 85,155 L 90,155" fill="none" stroke="#0f172a" stroke-width="1.5" />
+    <path d="M 215,55 L 220,55 L 220,155 L 215,155" fill="none" stroke="#0f172a" stroke-width="1.5" />
+
+    <!-- Matrix elements -->
+    <!-- Col 1 (Red) -->
+    <text x="95" y="75" font-family="monospace" font-size="11" font-weight="bold" fill="#ef4444">cos θ</text>
+    <text x="105" y="105" font-family="monospace" font-size="11" font-weight="bold" fill="#ef4444">0</text>
+    <text x="95" y="135" font-family="monospace" font-size="11" font-weight="bold" fill="#ef4444">-sin θ</text>
+
+    <!-- Col 2 (Gray) -->
+    <text x="150" y="75" font-family="monospace" font-size="11" fill="#94a3b8">0</text>
+    <text x="150" y="105" font-family="monospace" font-size="11" fill="#94a3b8">1</text>
+    <text x="150" y="135" font-family="monospace" font-size="11" fill="#94a3b8">0</text>
+
+    <!-- Col 3 (Blue) -->
+    <text x="180" y="75" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">sin θ</text>
+    <text x="190" y="105" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">0</text>
+    <text x="180" y="135" font-family="monospace" font-size="11" font-weight="bold" fill="#3b82f6">cos θ</text>
+
+    <!-- Subtitle mapping labels -->
+    <!-- Col 1 label -->
+    <path d="M 115,160 L 115,185" fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="115" y="200" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#ef4444" text-anchor="middle">1열: 새 X축 벡터</text>
+    <text x="115" y="213" font-family="monospace" font-size="9" fill="#ef4444" text-anchor="middle">(cos θ, 0, -sin θ)</text>
+
+    <!-- Col 3 label -->
+    <path d="M 195,160 L 195,225" fill="none" stroke="#3b82f6" stroke-width="1" stroke-dasharray="2 2" />
+    <text x="195" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="10.5" font-weight="bold" fill="#3b82f6" text-anchor="middle">3열: 새 Z축 벡터</text>
+    <text x="195" y="253" font-family="monospace" font-size="9" fill="#3b82f6" text-anchor="middle">(sin θ, 0, cos θ)</text>
+  </g>
+</svg>

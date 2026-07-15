@@ -30,58 +30,58 @@
     <!-- Axes -->
     <line x1="-200" y1="0" x2="200" y2="0" fill="none" stroke="#cbd5e1" stroke-width="1" />
     <line x1="0" y1="-170" x2="0" y2="170" fill="none" stroke="#cbd5e1" stroke-width="1" />
-    
-    <text x="205" y="4" font-family="sans-serif" font-size="11" fill="#94a3b8" text-anchor="start">x</text>
-    <text x="5" y="-172" font-family="sans-serif" font-size="11" fill="#94a3b8" text-anchor="start">y</text>
+
+    <text x="205" y="4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8" text-anchor="start">x</text>
+    <text x="5" y="-172" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8" text-anchor="start">y</text>
 
     <!-- FOV Cone (±22.5 degrees around forward vector, which is at 0 degrees) -->
     <!-- Arc path for 45 deg sector: radius=160, start angle -22.5 to 22.5 -->
     <path d="M 0 0 L 147.8 -61.2 A 160 160 0 0 1 147.8 61.2 Z" fill="rgba(16, 185, 129, 0.08)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4" />
-    
+
     <!-- 90 Degree line (Front vs Back boundary line) -->
     <line x1="0" y1="-160" x2="0" y2="160" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3" />
-    <text x="5" y="155" font-family="sans-serif" font-size="11" fill="#94a3b8">전방 / 후방 경계선 (90°)</text>
+    <text x="5" y="155" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#94a3b8">전방 / 후방 경계선 (90°)</text>
 
     <!-- Player (Center) -->
     <circle cx="0" cy="0" r="15" fill="#3b82f6" stroke="#1d4ed8" stroke-width="2" />
     <line x1="0" y1="0" x2="20" y2="0" fill="none" stroke="#1d4ed8" stroke-width="3" />
     <!-- Forward Vector -->
     <line x1="0" y1="0" x2="100" y2="0" fill="none" stroke="#3b82f6" stroke-width="3.5" marker-end="url(#arrow-blue)" />
-    <text x="75" y="-12" font-family="sans-serif" font-size="12" font-weight="bold" fill="#3b82f6">forward</text>
+    <text x="75" y="-12" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#3b82f6">forward</text>
 
     <!-- Enemy A: In FOV (Angle = 10 deg, Distance = 140) -->
     <line x1="0" y1="0" x2="134" y2="23.6" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow-green)" />
     <circle cx="137.8" cy="24.3" r="8" fill="#10b981" stroke="#047857" stroke-width="2" />
-    <text x="148" y="28" font-family="sans-serif" font-size="12" font-weight="bold" fill="#047857">적 A</text>
-    <text x="148" y="42" font-family="sans-serif" font-size="11" fill="#475569">facing = 0.98 (시야 내)</text>
+    <text x="148" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#047857">적 A</text>
+    <text x="148" y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing = 0.98 (시야 내)</text>
 
     <!-- Enemy B: Front, but Outside FOV (Angle = 60 deg, Distance = 150) -->
     <line x1="0" y1="0" x2="71" y2="123" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow-orange)" />
     <circle cx="75" cy="130" r="8" fill="#f59e0b" stroke="#b45309" stroke-width="2" />
-    <text x="85" y="132" font-family="sans-serif" font-size="12" font-weight="bold" fill="#b45309">적 B</text>
-    <text x="85" y="146" font-family="sans-serif" font-size="11" fill="#475569">facing = 0.50 (시야 밖 전방)</text>
+    <text x="85" y="132" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#b45309">적 B</text>
+    <text x="85" y="146" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing = 0.50 (시야 밖 전방)</text>
 
     <!-- Enemy C: Back (Angle = 140 deg, Distance = 130) -->
     <line x1="0" y1="0" x2="-95.8" y2="80.4" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow-red)" />
     <circle cx="-99.6" cy="83.6" r="8" fill="#ef4444" stroke="#b91c1c" stroke-width="2" />
-    <text x="-140" y="87" font-family="sans-serif" font-size="12" font-weight="bold" fill="#b91c1c">적 C</text>
-    <text x="-165" y="101" font-family="sans-serif" font-size="11" fill="#475569">facing = -0.77 (후방)</text>
+    <text x="-140" y="87" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="bold" fill="#b91c1c">적 C</text>
+    <text x="-165" y="101" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing = -0.77 (후방)</text>
   </g>
 
   <!-- Title and Legend -->
-  <text x="25" y="35" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">내적을 이용한 위치 판정 (시야각 45°)</text>
-  <text x="25" y="55" font-family="sans-serif" font-size="12" fill="#64748b">Facing = dot(forward, toEnemy)의 결과값에 따른 판정 영역</text>
+  <text x="25" y="35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="16" font-weight="bold" fill="#0f172a">내적을 이용한 위치 판정 (시야각 45°)</text>
+  <text x="25" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="12" fill="#64748b">Facing = dot(forward, toEnemy)의 결과값에 따른 판정 영역</text>
 
   <!-- Legend Box (Moved right to x=435, and widened to width=140 to prevent text cutoff) -->
   <g transform="translate(435, 20)">
     <rect width="140" height="95" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="4" />
     <circle cx="15" cy="20" r="6" fill="#10b981" stroke="#047857" stroke-width="2" />
-    <text x="28" y="24" font-family="sans-serif" font-size="11" fill="#475569">facing &gt; 0.707 (시야 내)</text>
+    <text x="28" y="24" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing &gt; 0.707 (시야 내)</text>
 
     <circle cx="15" cy="45" r="6" fill="#f59e0b" stroke="#b45309" stroke-width="2" />
-    <text x="28" y="49" font-family="sans-serif" font-size="11" fill="#475569">facing &gt; 0 (전방)</text>
+    <text x="28" y="49" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing &gt; 0 (전방)</text>
 
     <circle cx="15" cy="70" r="6" fill="#ef4444" stroke="#b91c1c" stroke-width="2" />
-    <text x="28" y="74" font-family="sans-serif" font-size="11" fill="#475569">facing &lt; 0 (후방)</text>
+    <text x="28" y="74" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569">facing &lt; 0 (후방)</text>
   </g>
 </svg>

@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250">
   <rect width="900" height="250" rx="16" fill="#f8fafc"/>
   <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#2563eb"/></marker></defs>
-  <text x="450" y="28" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="700" fill="#0f172a">Steering Behavior</text>
-  <g font-family="sans-serif" text-anchor="middle"><text x="150" y="58" fill="#0f172a">Seek</text><text x="450" y="58" fill="#0f172a">Arrive</text><text x="750" y="58" fill="#0f172a">Pursuit</text></g>
+  <text x="450" y="28" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="18" font-weight="700" fill="#0f172a">Steering Behavior</text>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" text-anchor="middle"><text x="150" y="58" fill="#0f172a">Seek</text><text x="450" y="58" fill="#0f172a">Arrive</text><text x="750" y="58" fill="#0f172a">Pursuit</text></g>
   <g fill="#60a5fa"><circle cx="70" cy="145" r="16"/><circle cx="370" cy="145" r="16"/><circle cx="670" cy="170" r="16"/></g>
   <g fill="#f97316"><circle cx="230" cy="145" r="13"/><circle cx="530" cy="145" r="13"/><circle cx="810" cy="105" r="13"/></g>
   <g stroke="#2563eb" stroke-width="4" fill="none" marker-end="url(#a)"><path d="M92 145H205"/><path d="M392 145C430 145 470 145 505 145"/><path d="M692 165Q735 145 790 115"/></g>
   <circle cx="480" cy="145" r="50" fill="none" stroke="#f59e0b" stroke-dasharray="5 5"/><circle cx="845" cy="85" r="10" fill="none" stroke="#f97316" stroke-dasharray="3 3"/>
-  <g font-family="sans-serif" font-size="11" fill="#475569" text-anchor="middle"><text x="150" y="215">최대 속도로 목표를 향함</text><text x="450" y="215">slow radius 안에서 감속</text><text x="750" y="215">미래 목표 위치를 예측</text></g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Nanum Gothic', 'Noto Sans KR', sans-serif" font-size="11" fill="#475569" text-anchor="middle"><text x="150" y="215">최대 속도로 목표를 향함</text><text x="450" y="215">slow radius 안에서 감속</text><text x="750" y="215">미래 목표 위치를 예측</text></g>
 </svg>
