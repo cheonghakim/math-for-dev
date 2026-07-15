@@ -8,9 +8,14 @@
     "validate:syntax": "node validate_js_snippets.js",
     "validate:numeric": "node validate_numeric_examples.js",
     "validate:output": "node validate_generated_output.js",
-    "test": "npm run validate:syntax && npm run validate:numeric && npm run build && npm run validate:output"
+    "test": "npm run validate:syntax && npm run validate:numeric && npm run build && npm run validate:output",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "marked": "^18.0.6"
+  },
+  "devDependencies": {
+    "wrangler": "^4.110.0"
   }
 }
